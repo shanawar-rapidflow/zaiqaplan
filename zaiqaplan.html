@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,interactive-widget=resizes-content"/>
+<title>ZaiqaPlan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --or:#E85D2C;--orl:#F4825A;--orp:#FEE8DF;--ord:#C44A1E;
+  --sa:#6B8C6E;--sap:#EBF2EC;--sal:#9BB89E;
+  --cr:#FAF6F0;--crd:#F0E8DC;--crdd:#E5D9CC;
+  --br:#3D2C1E;--brm:#7A5C42;--brl:#A8836A;
+  --wh:#FFFFFF;
+  --red:#DC2626;--redp:#FEE2E2;
+  --blue:#2563EB;--bluep:#EFF6FF;
+  --amber:#D97706;--amberp:#FEF3C7;
+  --purple:#7C3AED;--purplep:#EDE9FE;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cr);color:var(--br);}
+h1,h2,h3,h4{font-family:'Playfair Display',serif;}
+
+/* ══ SPLASH ══ */
+#splash{position:fixed;inset:0;z-index:999;background:var(--or);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease,transform .5s ease;}
+#splash.hide{opacity:0;transform:scale(1.06);pointer-events:none;}
+.sp-icon{width:120px;height:120px;border-radius:32px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:66px;margin-bottom:28px;box-shadow:0 12px 48px rgba(0,0,0,.18);animation:spPop .7s cubic-bezier(.34,1.56,.64,1) both;}
+.sp-title{font-family:'Playfair Display',serif;font-size:40px;color:#fff;letter-spacing:-.5px;animation:spUp .5s ease .25s both;}
+.sp-sub{font-size:13px;color:rgba(255,255,255,.72);margin-top:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;animation:spUp .5s ease .38s both;}
+.sp-dots{display:flex;gap:8px;margin-top:52px;animation:spUp .4s ease .5s both;}
+.sdot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);animation:sdP 1.3s ease infinite;}
+.sdot:nth-child(2){animation-delay:.22s;}.sdot:nth-child(3){animation-delay:.44s;}
+@keyframes spPop{from{opacity:0;transform:scale(.3) rotate(-20deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes spUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sdP{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+
+/* ══ APP ROOT ══ */
+#app{position:fixed;inset:0;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ══ AUTH ══ */
+.auth-wrap{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--cr);}
+.auth-hero{background:var(--or);padding:calc(40px + 24px) 28px 48px;display:flex;flex-direction:column;align-items:center;text-align:center;}
+.auth-app-icon{width:84px;height:84px;border-radius:22px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:46px;margin-bottom:16px;box-shadow:0 6px 28px rgba(0,0,0,.14);}
+.auth-title{font-family:'Playfair Display',serif;font-size:32px;color:#fff;margin-bottom:5px;}
+.auth-tag{font-size:13px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:.05em;}
+.auth-body{padding:28px 22px calc(80px + env(safe-area-inset-bottom,0px));}
+.auth-seg{display:flex;background:var(--crd);border-radius:12px;padding:4px;margin-bottom:22px;}
+.auth-seg-btn{flex:1;padding:9px;text-align:center;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;color:var(--brm);border:none;background:none;transition:all .15s;}
+.auth-seg-btn.on{background:var(--wh);color:var(--br);box-shadow:0 1px 6px rgba(61,44,30,.1);}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:var(--brl);font-size:11px;font-weight:700;letter-spacing:.06em;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--crd);}
+.auth-admin-row{text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--crd);}
+
+/* ══ FORM ══ */
+.inp{width:100%;padding:13px 14px;border:1.5px solid var(--crd);border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:var(--br);background:var(--cr);outline:none;display:block;-webkit-appearance:none;appearance:none;transition:border-color .15s;margin-bottom:10px;}
+.inp:focus{border-color:var(--or);}
+.inp:last-of-type{margin-bottom:0;}
+textarea.inp{resize:vertical;min-height:100px;line-height:1.5;}
+select.inp{cursor:pointer;}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--brm);display:block;margin-bottom:6px;margin-top:14px;}
+.lbl:first-child{margin-top:0;}
+.ferr{font-size:12px;color:var(--red);font-weight:600;padding:9px 12px;background:var(--redp);border-radius:8px;margin-top:8px;}
+.fok{font-size:12px;color:var(--sa);font-weight:600;padding:9px 12px;background:var(--sap);border-radius:8px;margin-top:8px;}
+
+/* ══ BUTTONS ══ */
+.btn-p{background:var(--or);color:#fff;border:none;border-radius:12px;padding:14px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 16px rgba(232,93,44,.25);display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s;margin-top:14px;}
+.btn-p:disabled{opacity:.45;}
+.btn-p:active{opacity:.82;}
+.btn-ghost{background:none;border:1.5px solid var(--crd);color:var(--brm);border-radius:10px;padding:11px 16px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;}
+.btn-ghost:active{background:var(--cr);}
+.btn-red{background:var(--red);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-blue{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-sage{background:var(--sa);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.text-btn{background:none;border:none;color:var(--or);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;padding:0;}
+.link-btn{background:none;border:none;color:var(--brm);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;}
+.wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:#25D366;color:#fff;border:none;border-radius:12px;padding:13px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;text-decoration:none;margin-top:10px;width:100%;cursor:pointer;}
+
+/* ══ ADMIN SHELL ══ */
+.adm-shell{display:flex;flex-direction:column;height:100%;background:#1E120A;}
+.adm-topbar{padding:calc(40px + 10px) 18px 12px;background:linear-gradient(160deg,#2A1D12,#1E120A);border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+.adm-topbar-row{display:flex;align-items:center;justify-content:space-between;}
+.adm-logo{display:flex;align-items:center;gap:10px;}
+.adm-logo-icon{width:36px;height:36px;border-radius:10px;background:var(--or);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.adm-logo-title{font-family:'Playfair Display',serif;font-size:19px;color:#fff;line-height:1;}
+.adm-logo-sub{font-size:10px;color:rgba(255,255,255,.35);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.adm-logout{background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.25);border-radius:8px;padding:7px 14px;color:#FCA5A5;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+
+/* Admin tab bar */
+.adm-tabs{display:flex;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.adm-tabs::-webkit-scrollbar{display:none;}
+.adm-tab{flex-shrink:0;padding:13px 16px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.35);cursor:pointer;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;border-bottom:3px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;}
+.adm-tab.on{color:var(--orl);border-bottom-color:var(--or);}
+
+.adm-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));}
+
+/* Admin cards */
+.ac{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:12px;}
+.ac-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.ai{width:100%;padding:11px 13px;border:1.5px solid rgba(255,255,255,.1);border-radius:9px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:#fff;background:rgba(255,255,255,.06);outline:none;display:block;-webkit-appearance:none;appearance:none;transition:border-color .15s;margin-bottom:9px;}
+.ai:focus{border-color:var(--orl);}
+.ai::placeholder{color:rgba(255,255,255,.22);}
+.ai option{background:#2A1D12;}
+.al{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.3);display:block;margin-bottom:5px;margin-top:12px;}
+.al:first-child{margin-top:0;}
+.a-ok{background:rgba(107,140,110,.18);border:1px solid rgba(107,140,110,.3);color:#9BB89E;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-top:10px;}
+.a-err{background:rgba(220,38,38,.14);border:1px solid rgba(220,38,38,.28);color:#FCA5A5;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-top:10px;}
+
+/* Stat grid */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.sc{border-radius:13px;padding:15px 13px;border:1px solid rgba(255,255,255,.07);}
+.sc-icon{font-size:20px;margin-bottom:8px;}
+.sc-num{font-family:'Playfair Display',serif;font-size:30px;color:#fff;line-height:1;}
+.sc-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.38);margin-top:4px;}
+.sc-or{background:rgba(232,93,44,.13);border-color:rgba(232,93,44,.22);}
+.sc-gr{background:rgba(107,140,110,.13);border-color:rgba(107,140,110,.22);}
+.sc-bl{background:rgba(37,99,235,.13);border-color:rgba(37,99,235,.2);}
+.sc-am{background:rgba(217,119,6,.13);border-color:rgba(217,119,6,.2);}
+
+/* Admin rows */
+.a-dish-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.a-dish-row:last-child{border-bottom:none;}
+.a-dish-name{flex:1;font-size:14px;font-weight:500;color:rgba(255,255,255,.82);}
+.a-dish-cat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;margin-right:8px;white-space:nowrap;}
+.a-btns{display:flex;gap:5px;}
+.a-user-row{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.a-user-row:last-child{border-bottom:none;}
+.a-user-email{font-size:13px;font-weight:600;color:rgba(255,255,255,.82);}
+.a-user-meta{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px;}
+.a-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;}
+.a-badge-g{background:rgba(107,140,110,.22);color:#9BB89E;}
+.a-badge-r{background:rgba(220,38,38,.18);color:#FCA5A5;}
+
+/* Edit overlay */
+.eo{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.ebox{width:100%;max-width:360px;background:#2A1D12;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:22px;animation:spUp .2s ease;}
+.ebox-title{font-family:'Playfair Display',serif;font-size:18px;color:#fff;margin-bottom:16px;}
+
+/* ══ USER APP SHELL ══ */
+.app-shell{display:flex;flex-direction:column;height:100%;}
+.app-hdr-wrap{flex-shrink:0;background:var(--or);}
+.hdr{padding:calc(32px + 10px) 18px 12px;background:var(--or);display:flex;align-items:center;justify-content:space-between;}
+.hdr-brand{font-family:'Playfair Display',serif;font-size:22px;line-height:1;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.7);font-weight:500;margin-top:1px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.hdr-hi{font-size:13px;color:rgba(255,255,255,.9);font-weight:600;background:rgba(255,255,255,.18);padding:5px 12px;border-radius:20px;}
+.hdr-link{background:none;border:none;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;padding:0;}
+.hdr-sep{color:rgba(255,255,255,.3);font-size:14px;}
+.main-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.tab-bar{background:var(--wh);border-top:1px solid var(--crd);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -4px 20px rgba(61,44,30,.07);flex-shrink:0;}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 0 7px;font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--brm);cursor:pointer;border:none;background:none;text-transform:uppercase;font-family:'Plus Jakarta Sans',sans-serif;gap:3px;transition:color .15s;}
+.tab-btn.on{color:var(--or);}
+.tab-btn svg path,.tab-btn svg circle,.tab-btn svg rect,.tab-btn svg line{transition:stroke .15s, fill .15s;}
+
+/* ══ USER CONTENT ══ */
+.ca{padding:16px 16px calc(80px + env(safe-area-inset-bottom,0px));}
+.card{background:var(--wh);border-radius:14px;box-shadow:0 2px 12px rgba(61,44,30,.07);overflow:hidden;}
+.dish-row{display:flex;align-items:center;padding:12px 15px;border-bottom:1px solid var(--cr);}
+.dish-row:last-child{border-bottom:none;}
+.cb{width:22px;height:22px;min-width:22px;border-radius:6px;border:2px solid var(--crdd);display:flex;align-items:center;justify-content:center;margin-right:11px;cursor:pointer;flex-shrink:0;background:var(--wh);}
+.cb.on{background:var(--sa);border-color:var(--sa);}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;display:inline-block;margin-top:3px;}
+.cat-meat{background:#FEE8DF;color:#C0440D;}.cat-chicken{background:#FFF4E0;color:#B07A00;}.cat-veg{background:var(--sap);color:var(--sa);}.cat-sea{background:#E0F0FA;color:#1A6FA0;}.cat-def{background:var(--crd);color:var(--brm);}
+.fab{position:fixed;bottom:calc(65px + env(safe-area-inset-bottom,0px) + 14px);right:18px;width:54px;height:54px;border-radius:16px;background:var(--or);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(232,93,44,.45);border:none;cursor:pointer;z-index:15;font-size:27px;line-height:1;}
+.day-card{background:var(--wh);border-radius:14px;overflow:hidden;margin-bottom:12px;box-shadow:0 2px 12px rgba(61,44,30,.06);}
+.day-hdr{background:var(--or);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;}
+.meal-slot{background:var(--cr);border-radius:10px;padding:11px 13px;margin-bottom:7px;}
+.meal-slot:last-child{margin-bottom:0;}
+.meal-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--brm);margin-bottom:3px;}
+.meal-name{font-size:14px;font-weight:600;}
+.shuf-btn{background:rgba(255,255,255,.22);border:none;border-radius:7px;padding:4px 11px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.gen-btn{background:var(--or);color:#fff;border:none;border-radius:11px;padding:9px 16px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;box-shadow:0 3px 12px rgba(232,93,44,.25);}
+.gen-btn:disabled{opacity:.45;}
+.del-btn{background:none;border:none;cursor:pointer;padding:4px 7px;color:var(--or);font-size:16px;flex-shrink:0;}
+.pill-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none;}
+.pill-row::-webkit-scrollbar{display:none;}
+.fpill{flex-shrink:0;padding:5px 13px;border-radius:20px;border:1.5px solid var(--crd);background:var(--wh);color:var(--brm);font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.fpill.on{border-color:var(--or);background:var(--orp);color:var(--or);}
+.share-pre{margin:0;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;line-height:1.8;color:var(--br);white-space:pre-wrap;word-break:break-word;}
+.empty{text-align:center;padding:50px 24px;color:var(--brm);}
+.empty-icon{font-size:44px;margin-bottom:12px;}
+.row-bet{display:flex;align-items:center;justify-content:space-between;}
+.sec-title{font-size:18px;margin-bottom:2px;}
+.sec-sub{font-size:13px;color:var(--brm);}
+
+/* ══ BOTTOM SHEET ══ */
+.overlay{position:fixed;inset:0;background:rgba(61,44,30,.5);z-index:100;display:flex;align-items:flex-end;}
+.sheet{width:100%;background:var(--wh);border-radius:22px 22px 0 0;padding:22px 20px calc(28px + env(safe-area-inset-bottom,0px));animation:shUp .22s ease;max-height:92vh;overflow-y:auto;}
+@keyframes shUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.drag{width:38px;height:4px;background:#E0D8D0;border-radius:4px;margin:0 auto 20px;}
+
+/* ══ GROCERY ══ */
+.groc-item{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--cr);gap:10px;}
+.groc-item:last-child{border-bottom:none;}
+.groc-item.done .groc-name{text-decoration:line-through;opacity:.45;}
+.groc-cb{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid var(--crdd);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:var(--wh);}
+.groc-cb.on{background:var(--sa);border-color:var(--sa);}
+.groc-name{flex:1;font-size:14px;font-weight:600;}
+.groc-qty{font-size:12px;color:var(--brm);font-weight:600;white-space:nowrap;}
+.groc-actions{display:flex;gap:4px;}
+.groc-share-box{background:var(--cr);border:1.5px solid var(--crd);border-radius:12px;padding:14px;margin-bottom:14px;}
+.groc-cats-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.groc-cat-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+
+/* ══ SETTINGS ══ */
+.sett-section{background:var(--wh);border-radius:14px;box-shadow:0 2px 12px rgba(61,44,30,.07);overflow:hidden;margin-bottom:14px;}
+.sett-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--cr);}
+.sett-row:last-child{border-bottom:none;}
+.sett-label{font-size:14px;font-weight:600;}
+.sett-val{font-size:13px;color:var(--brm);}
+.sett-danger{background:var(--redp);border-radius:14px;overflow:hidden;margin-bottom:14px;}
+.sett-danger .sett-row{border-bottom-color:rgba(220,38,38,.1);}
+.sett-danger .sett-label{color:var(--red);}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--br);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:300;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.25);pointer-events:none;animation:tIn .22s ease,tOut .3s ease 2.4s forwards;}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes tOut{to{opacity:0}}
+
+/* ══ KEYBOARD AWARE ══ */
+/* Bottom sheet sits above keyboard using JS (visualViewport approach) */
+.overlay{position:fixed;inset:0;background:rgba(61,44,30,.5);z-index:100;display:flex;flex-direction:column;justify-content:flex-end;}
+.sheet{width:100%;background:var(--wh);border-radius:22px 22px 0 0;padding:22px 20px 28px;animation:shUp .22s ease;max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch;flex-shrink:0;}
+/* Edit overlay (admin dark) */
+.eo{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;overflow-y:auto;}
+.ebox{width:100%;max-width:360px;background:#2A1D12;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:22px;animation:spUp .2s ease;overflow-y:auto;max-height:85vh;}
+/* Auth page scrolls up when keyboard opens */
+.auth-wrap{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--cr);scroll-behavior:smooth;}
+/* ══ MISC ══ */
+.spin{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;}
+.big-spin{width:32px;height:32px;border-radius:50%;border:3px solid var(--crd);border-top-color:var(--or);animation:sp .7s linear infinite;}
+.a-spin{width:26px;height:26px;border-radius:50%;border:2.5px solid rgba(255,255,255,.12);border-top-color:var(--orl);animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.info-box{background:var(--orp);border:1px solid rgba(232,93,44,.2);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--ord);margin-bottom:14px;line-height:1.5;font-weight:500;}
+.warn-box{background:var(--amberp);border:1px solid rgba(217,119,6,.22);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--amber);margin-bottom:14px;font-weight:600;}
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="sp-icon">🫕</div>
+  <div class="sp-title">ZaiqaPlan</div>
+  <div class="sp-sub">Family Meal Planner</div>
+  <div class="sp-dots"><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div></div>
+</div>
+<div id="app"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   ZAIQAPLAN  ·  Vanilla JS · Zero deps
+   ══════════════════════════════════════════ */
+
+var ADMIN_PASSWORD = 'zaiqaadmin2025'; // ← Change this!
+
+// ══════════════════════════════════════════════════════
+//  OBFUSCATED SUPABASE CREDENTIALS
+//  XOR(0x5A) + base64 + reversed chunks — not plain text
+// ══════════════════════════════════════════════════════
+function _dk(arr,k){
+  var s=arr.map(function(c){return c.split('').reverse().join('');}).join('');
+  var b=atob(s);var r='';
+  for(var i=0;i<b.length;i++)r+=String.fromCharCode(b.charCodeAt(i)^k);
+  return r;
+}
+var _d0=['+UXdgliKu4iM','4oiPqMyM5gyK','wkDOvoSPqICM','psDO7oyLpQnK','==QN5Q3P'];
+var _d1=['VMTOdgjMQMyP','zQxaTAyDTAxM','TkROvhANTkyE','jBRGMIgKxMBb','zcRa5oCEj8Dd','DIDGC4DIQMTF','0MRKTkAAgwxN','IczEsNxMAYDE','xghA/oCF3kjI','5QDGS8zKQ0RO','zMRLqg2AzwgE','TkAApM2N5MTL','z4Ga48CH3MBb','VMzCCMgKQkhF','eQRLXACFp9BM','MczEp0jHV42G','utBMXw2EZkjb','V4WPwQhID4RF','7kwdTwhM0pmE','sNzKp8DFj8wa','FwgH3whMcMQC','bs2Pq0DDbUDL','u5zdPUDCyASF','==gb'];
+var _d2=['VMTOdgjMQMyP','zQxaTAyDTAxM','TkROvhANTkyE','jBRGMIgKxMBb','zcRa5oCEj8Dd','DIDGC4DIQMTF','0MRKTkAAgwxN','IczEsNxMAYDE','xghA/oCF3kjI','5QDGS8zKQ0RO','zMRLqg2AzwgE','TkAApM2N5MTL','qAAN5YDF0MBb','AkyY3kDPMg2A','Z4jM2czEpMRC','bAyFpljDXw2E','z0SGV4WPecha','XMSNwMRLyIAA','eUBafADFu1jH','uZRL2Q3C84WP','LoQPXsGNoJxE','vowdP8RHi9CK','P4TF0IQGWkyP','CcnD/k2CZIxN','bwmb'];
+var HARDCODED_SUPABASE_URL     = _dk(_d0,0x5A);
+var HARDCODED_SUPABASE_ANON    = _dk(_d1,0x5A);
+var HARDCODED_SUPABASE_SERVICE = _dk(_d2,0x5A);
+// ══════════════════════════════════════════════════════
+
+var DAYS     = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+var BASE_CATS = ['Meat','Chicken','Vegetarian','Seafood','Rice','Bread','Other'];
+var ALL_CATS = ['All','Meat','Chicken','Vegetarian','Seafood','Rice','Bread','Other'];
+function getAddCats(){
+  var extras=(S&&S.adminCats||[]).map(function(c){return c.name;});
+  var base=BASE_CATS.slice();
+  extras.forEach(function(e){if(base.indexOf(e)===-1)base.push(e);});
+  return base;
+}
+function getAllCats(){
+  var cats=getAddCats();
+  return ['All'].concat(cats);
+}
+var GROC_UNITS = ['kg','g','L','ml','pcs','dozen','pack','bunch','can','box','tbsp','cup'];
+var SK = {url:'zp_su',key:'zp_sk',svckey:'zp_svk',sess:'zp_sess',week:'zp_week3',uck:'zp_uck3',groc:'zp_groc2'};
+
+/* ── GROCERY LOCAL STORAGE ── */
+function loadGroc(){try{return JSON.parse(localStorage.getItem(SK.groc)||'[]');}catch(x){return[];}}
+function saveGroc(){localStorage.setItem(SK.groc,JSON.stringify(S.grocItems));}
+
+/* ── GLOBAL STATE ── */
+var S = {
+  view:'splash',
+  supaUrl:localStorage.getItem(SK.url)||HARDCODED_SUPABASE_URL,
+  supaKey:localStorage.getItem(SK.key)||HARDCODED_SUPABASE_ANON,
+  supaServiceKey:localStorage.getItem(SK.svckey)||HARDCODED_SUPABASE_SERVICE,
+  session:(function(){try{return JSON.parse(localStorage.getItem(SK.sess)||'null');}catch(x){return null;}}()),
+  // auth
+  authMode:'login',
+  authEmail:'',authPass:'',authName:'',authConfPass:'',
+  authErr:'',authOk:'',authBusy:false,
+  // forgot password flow (in-app)
+  forgotMode:false,
+  forgotStep:1, // 1=enter email, 2=enter new password
+  forgotEmail:'',forgotNewPass:'',forgotConfPass:'',forgotBusy:false,forgotErr:'',forgotOk:'',
+  // admin
+  adminPass:'',adminPassErr:'',
+  adminTab:'overview',
+  adminUrl:'',adminKey:'',adminSvcKey:'',
+  adminCfgStatus:'',adminCfgMsg:'',
+  adminDishes:[],adminDishBusy:false,
+  adminAddName:'',adminAddCat:'Meat',adminAddBusy:false,
+  adminEditDish:null,adminEditName:'',adminEditCat:'',
+  adminUserDishes:[],adminUserDishBusy:false,
+  adminUsers:[],adminUserBusy:false,adminUsersViaAdmin:false,
+  adminStats:null,adminStatBusy:false,
+  adminCats:[],adminCatBusy:false,adminAddCatName:'',adminCatEditId:null,adminCatEditName:'',
+  // user app
+  tab:'schedule',
+  dishes:[],loading:false,
+  unchecked:(function(){try{return JSON.parse(localStorage.getItem(SK.uck)||'[]');}catch(x){return[];}}()),
+  week:(function(){try{return JSON.parse(localStorage.getItem(SK.week)||'null');}catch(x){return null;}}()),
+  weekEdit:null, // {dayIdx, slot} for dropdown edit
+  search:'',filter:'All',
+  showAddDish:false,addDishName:'',addDishCat:'Meat',addDishBusy:false,
+  copied:false,
+  // settings
+  settName:'',settEmail:'',settNewPass:'',settCurrPass:'',settBusy:false,settOk:'',settErr:'',
+  feedbackText:'',feedbackBusy:false,feedbackOk:'',feedbackErr:'',
+  // grocery
+  grocItems:loadGroc(),
+  grocAddName:'',grocAddQty:'1',grocAddUnit:'pcs',grocAddPrice:'',grocAddBusy:false,
+  grocShowAdd:false,
+  grocEditItem:null,grocEditName:'',grocEditQty:'',grocEditUnit:'',grocEditPrice:'',
+  grocFilter:'all',
+  // toast
+  toast:null,toastTimer:null,
+};
+
+/* ══ SUPABASE REST ══ */
+function getServiceKey(){return S.supaServiceKey||S.supaKey;}
+function sbH(svc){
+  var tok=svc?getServiceKey():(S.session&&S.session.access_token?S.session.access_token:S.supaKey);
+  var apiKey=svc?getServiceKey():S.supaKey;
+  return {'apikey':apiKey,'Authorization':'Bearer '+tok,'Content-Type':'application/json','Accept':'application/json'};
+}
+async function sbFetch(path,opts,svc){
+  var r=await fetch(S.supaUrl+path,Object.assign({headers:sbH(svc)},opts||{}));
+  var txt=await r.text();var j;try{j=JSON.parse(txt);}catch(x){j=txt;}
+  if(!r.ok) throw new Error((j&&j.message)||(j&&j.error_description)||String(j)||('HTTP '+r.status));
+  return j;
+}
+/* Table CRUD — uses anon/user token (RLS applies) */
+async function dbGet(t,qs){return sbFetch('/rest/v1/'+t+'?select=*'+(qs?'&'+qs:'')+'&order=created_at.asc');}
+/* Admin table writes — uses service key if available, else anon */
+async function dbInsert(t,o){return sbFetch('/rest/v1/'+t,{method:'POST',headers:Object.assign({},sbH(true),{'Prefer':'return=representation'}),body:JSON.stringify(o)},true);}
+async function dbUpdate(t,id,o){return sbFetch('/rest/v1/'+t+'?id=eq.'+id,{method:'PATCH',headers:Object.assign({},sbH(true),{'Prefer':'return=representation'}),body:JSON.stringify(o)},true);}
+async function dbDelete(t,id){return sbFetch('/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE'},true);}
+/* User table writes — uses user token */
+async function userInsert(t,o){return sbFetch('/rest/v1/'+t,{method:'POST',headers:Object.assign({},sbH(false),{'Prefer':'return=representation'}),body:JSON.stringify(o)});}
+async function userDelete(t,id){return sbFetch('/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE'});}
+/* Auth */
+async function authSignUp(e,p,n){return sbFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:e,password:p,data:{full_name:n}})});}
+async function authSignIn(e,p){return sbFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:e,password:p})});}
+async function authSignOut(){try{await sbFetch('/auth/v1/logout',{method:'POST'});}catch(x){}S.session=null;localStorage.removeItem(SK.sess);}
+async function authReset(e){return sbFetch('/auth/v1/recover',{method:'POST',body:JSON.stringify({email:e})});}
+async function authUpdateUser(o){return sbFetch('/auth/v1/user',{method:'PUT',body:JSON.stringify(o)});}
+/* Admin auth users */
+async function adminGetUsers(){return sbFetch('/auth/v1/admin/users?page=1&per_page=100',{method:'GET'},true);}
+async function adminDeleteUser(uid){return sbFetch('/auth/v1/admin/users/'+uid,{method:'DELETE'},true);}
+async function adminGetUserByEmail(email){
+  // Get user list and find by email
+  var r=await adminGetUsers();
+  var users=(r&&r.users)||[];
+  return users.find(function(u){return u.email&&u.email.toLowerCase()===email.toLowerCase();})||null;
+}
+async function adminUpdateUserPassword(uid,newPass){
+  return sbFetch('/auth/v1/admin/users/'+uid,{method:'PUT',headers:Object.assign({},sbH(true),{'Content-Type':'application/json'}),body:JSON.stringify({password:newPass})},true);
+}
+
+/* ══ HELPERS ══ */
+function catCls(c){if(!c)return'cat-def';var l=c.toLowerCase();if(l.indexOf('meat')>-1||l.indexOf('beef')>-1||l.indexOf('mutton')>-1)return'cat-meat';if(l.indexOf('chicken')>-1||l.indexOf('poultry')>-1)return'cat-chicken';if(l.indexOf('veg')>-1)return'cat-veg';if(l.indexOf('sea')>-1||l.indexOf('fish')>-1||l.indexOf('prawn')>-1)return'cat-sea';return'cat-def';}
+function shuffle(a){var b=a.slice(),i=b.length,j,t;while(i--){j=0|Math.random()*(i+1);t=b[i];b[i]=b[j];b[j]=t;}return b;}
+function balanced(pool,n){if(!pool.length)return[];var res=[],av=shuffle(pool),idx=0,s=0;while(res.length<n&&s<n*20){s++;var d=av[idx%av.length],l2=res.slice(-2),sc=0;for(var i=0;i<l2.length;i++)if(l2[i].category===d.category)sc++;if(sc<2||av.length<=2)res.push(d);idx++;}while(res.length<n)res.push(av[res.length%av.length]);return res;}
+function isUnchecked(id){return S.unchecked.indexOf(id)>-1;}
+function getPool(){return S.dishes.filter(function(d){return !isUnchecked(d.id);}).map(function(d){return {id:d.id,name:d.name||d.dish_name,category:d.category||d.dish_category};});}
+function saveUC(){localStorage.setItem(SK.uck,JSON.stringify(S.unchecked));}
+function saveW(){if(S.week)localStorage.setItem(SK.week,JSON.stringify(S.week));}
+function fmtDate(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});}catch(x){return s;}}
+function userName(){return S.session&&S.session.user&&(S.session.user.user_metadata&&S.session.user.user_metadata.full_name||S.session.user.email)||'';}
+function userFirstName(){var n=userName();return n?n.split(' ')[0]:'';}
+function showToast(m){if(S.toastTimer)clearTimeout(S.toastTimer);S.toast=m;renderToast();S.toastTimer=setTimeout(function(){S.toast=null;renderToast();},2900);}
+function renderToast(){var old=document.getElementById('toast-el');if(old)old.remove();if(S.toast){var t=el('div',{id:'toast-el',className:'toast'},[S.toast]);document.getElementById('app').appendChild(t);}}
+
+/* ══ DOM BUILDER ══ */
+function el(tag,attrs,children){
+  var n=document.createElement(tag);
+  (attrs?Object.keys(attrs):[]).forEach(function(k){
+    if(k==='className')n.className=attrs[k];
+    else if(k==='style'&&typeof attrs[k]==='object')Object.assign(n.style,attrs[k]);
+    else if(k.startsWith('on')&&typeof attrs[k]==='function')n.addEventListener(k.slice(2).toLowerCase(),attrs[k]);
+    else if(k==='disabled')n.disabled=attrs[k];
+    else if(k==='href')n.href=attrs[k];
+    else if(k==='target')n.target=attrs[k];
+    else if(k==='type')n.type=attrs[k];
+    else if(k==='placeholder')n.placeholder=attrs[k];
+    else if(k==='rows')n.rows=attrs[k];
+    else if(k!=='key')try{n.setAttribute(k,attrs[k]);}catch(x){}
+  });
+  (children||[]).forEach(function(c){if(c===null||c===undefined||c===false)return;n.appendChild(typeof c==='string'||typeof c==='number'?document.createTextNode(String(c)):c);});
+  return n;
+}
+function sv(tag,a,ch){var n=document.createElementNS('http://www.w3.org/2000/svg',tag);(a?Object.keys(a):[]).forEach(function(k){n.setAttribute(k,a[k]);});(ch||[]).forEach(function(c){n.appendChild(c);});return n;}
+function se(t,a){return sv(t,a,[]);}
+
+/* ══ ICONS ══ */
+function icoList(on){var c=on?'#E85D2C':'#7A5C42';return sv('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none'},[se('circle',{cx:5,cy:7,r:1.5,fill:c}),se('circle',{cx:5,cy:12,r:1.5,fill:c}),se('circle',{cx:5,cy:17,r:1.5,fill:c}),se('path',{d:'M9 7h10M9 12h10M9 17h10',stroke:c,'stroke-width':'1.8','stroke-linecap':'round'})]);}
+function icoCal(on){var c=on?'#E85D2C':'#7A5C42';return sv('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none'},[se('rect',{x:3,y:4,width:18,height:17,rx:3,stroke:c,'stroke-width':'1.8'}),se('path',{d:'M3 9h18M8 2v4M16 2v4',stroke:c,'stroke-width':'1.8','stroke-linecap':'round'})]);}
+function icoShare(on){var c=on?'#E85D2C':'#7A5C42';return sv('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none'},[se('circle',{cx:18,cy:5,r:2.5,stroke:c,'stroke-width':'1.8'}),se('circle',{cx:6,cy:12,r:2.5,stroke:c,'stroke-width':'1.8'}),se('circle',{cx:18,cy:19,r:2.5,stroke:c,'stroke-width':'1.8'}),se('path',{d:'M8.5 10.5l7-3.5M8.5 13.5l7 3.5',stroke:c,'stroke-width':'1.8','stroke-linecap':'round'})]);}
+function icoCart(on){var c=on?'#E85D2C':'#7A5C42';return sv('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none'},[se('path',{d:'M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z',stroke:c,'stroke-width':'1.8','stroke-linecap':'round','stroke-linejoin':'round'}),se('line',{x1:3,y1:6,x2:21,y2:6,stroke:c,'stroke-width':'1.8','stroke-linecap':'round'}),se('path',{d:'M16 10a4 4 0 01-8 0',stroke:c,'stroke-width':'1.8','stroke-linecap':'round','stroke-linejoin':'round'})]);}
+function icoSettings(on){var c=on?'#E85D2C':'#7A5C42';return sv('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none'},[se('circle',{cx:12,cy:12,r:3,stroke:c,'stroke-width':'1.8'}),se('path',{d:'M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42',stroke:c,'stroke-width':'1.8','stroke-linecap':'round'})]);}
+function icoCheck(){return sv('svg',{width:13,height:10,viewBox:'0 0 13 10',fill:'none'},[se('path',{d:'M1 5L5 9L12 1',stroke:'white','stroke-width':'2.2','stroke-linecap':'round','stroke-linejoin':'round'})]);}
+
+/* ══════════════════════════════════════════
+   AUTH SCREEN
+   ══════════════════════════════════════════ */
+function renderAuth(){
+  // ── FORGOT PASSWORD FLOW ──
+  if(S.forgotMode){
+    if(S.forgotStep===2) return renderForgotStep2();
+    return renderForgotStep1();
+  }
+
+  var isLogin=S.authMode==='login';
+
+  function doAuth(){
+    S.authErr='';S.authOk='';
+    if(S.authBusy)return;
+    if(!S.authEmail.trim()||!S.authPass.trim()){S.authErr='Please fill in all fields';render();return;}
+    if(!isLogin&&!S.authName.trim()){S.authErr='Please enter your name';render();return;}
+    if(!isLogin&&S.authPass.length<6){S.authErr='Password must be at least 6 characters';render();return;}
+    S.authBusy=true;render();
+    if(isLogin){
+      authSignIn(S.authEmail.trim(),S.authPass).then(function(res){
+        if(res.error)throw new Error(res.error.message||res.error);
+        S.session=res;localStorage.setItem(SK.sess,JSON.stringify(res));
+        S.authEmail='';S.authPass='';S.authName='';S.authErr='';S.authOk='';S.authBusy=false;
+        S.view='app';render();loadDishes();
+      }).catch(function(e){S.authBusy=false;S.authErr=e.message||'Sign in failed';render();});
+    } else {
+    authSignUp(S.authEmail.trim(),S.authPass,S.authName.trim()).then(function(res){
+        if(res.error)throw new Error(res.error.message||res.error);
+        // If we got a session (email confirmations disabled), log straight in
+        if(res.access_token){
+          S.session=res;localStorage.setItem(SK.sess,JSON.stringify(res));
+          S.authEmail='';S.authPass='';S.authName='';S.authConfPass='';
+          S.authErr='';S.authOk='';S.authBusy=false;
+          S.view='app';render();loadDishes();
+        } else if(res.user&&res.user.id&&!res.user.email_confirmed_at){
+          // Email confirmations enabled — auto sign in with credentials
+          authSignIn(S.authEmail.trim(),S.authPass).then(function(r2){
+            if(r2.error)throw new Error(r2.error.message||r2.error);
+            S.session=r2;localStorage.setItem(SK.sess,JSON.stringify(r2));
+            S.authEmail='';S.authPass='';S.authName='';
+            S.authErr='';S.authOk='';S.authBusy=false;
+            S.view='app';render();loadDishes();
+          }).catch(function(){
+            // fallback: tell them to sign in
+            S.authBusy=false;S.authPass='';
+            S.authOk='✓ Account created! Please sign in.';
+            S.authMode='login';render();
+          });
+        } else {
+          S.authBusy=false;
+          S.authOk='✓ Account created! Please sign in.';
+          S.authMode='login';render();
+        }
+      }).catch(function(e){S.authBusy=false;S.authErr=e.message||'Sign up failed';render();});
+    }
+  }
+
+  var body=[
+    el('div',{className:'auth-seg'},[
+      el('button',{className:'auth-seg-btn'+(isLogin?' on':''),onClick:function(){S.authMode='login';S.authErr='';S.authOk='';render();}},['Sign In']),
+      el('button',{className:'auth-seg-btn'+(!isLogin?' on':''),onClick:function(){S.authMode='signup';S.authErr='';S.authOk='';render();}},['Sign Up']),
+    ]),
+    !isLogin?el('input',{className:'inp',placeholder:'Your full name',type:'text',
+      onInput:function(e){S.authName=e.target.value;},
+      onKeyDown:function(e){if(e.key==='Enter')doAuth();}}):null,
+    el('input',{className:'inp',placeholder:'Email address',type:'email',
+      onInput:function(e){S.authEmail=e.target.value;},
+      onKeyDown:function(e){if(e.key==='Enter')doAuth();}}),
+    el('input',{className:'inp',placeholder:'Password',type:'password',
+      onInput:function(e){S.authPass=e.target.value;},
+      onKeyDown:function(e){if(e.key==='Enter')doAuth();}}),
+    el('div',{id:'auth-msg',style:{display:(S.authOk||S.authErr)?'block':'none'},className:S.authOk?'fok':'ferr'},[S.authOk||S.authErr]),
+    el('button',{id:'auth-btn',className:'btn-p',style:{marginTop:'12px'},disabled:S.authBusy,onClick:doAuth},[
+      S.authBusy?el('span',{className:'spin'}):null,
+      S.authBusy?'Please wait…':isLogin?'Sign In':'Create Account'
+    ]),
+    isLogin?el('div',{style:{textAlign:'center',marginTop:'12px'}},[
+      el('button',{className:'link-btn',onClick:function(){
+        S.forgotMode=true;S.forgotStep=1;S.forgotEmail='';S.forgotNewPass='';S.forgotConfPass='';
+        S.forgotErr='';S.forgotOk='';render();
+      }},['Forgot password?'])
+    ]):null,
+    el('div',{className:'auth-admin-row'},[
+      el('p',{style:{fontSize:'12px',color:'var(--brm)',marginBottom:'8px'}},['Administrator?']),
+      el('button',{className:'btn-ghost',style:{fontSize:'13px',padding:'9px 18px'},onClick:function(){S.adminPass='';S.adminPassErr='';S.view='admin-login';render();}},['🔐 Admin Panel'])
+    ])
+  ];
+
+  setTimeout(function(){
+    var inputs=document.querySelectorAll('.auth-body .inp');
+    inputs.forEach(function(inp){
+      if(inp.placeholder==='Your full name')inp.value=S.authName;
+      if(inp.placeholder==='Email address')inp.value=S.authEmail;
+      if(inp.placeholder==='Password')inp.value=S.authPass;
+    });
+  },10);
+
+  return el('div',{className:'auth-wrap'},[
+    el('div',{className:'auth-hero'},[
+      el('div',{className:'auth-app-icon'},['🫕']),
+      el('div',{className:'auth-title'},['ZaiqaPlan']),
+      el('div',{className:'auth-tag'},['Plan your family meals, effortlessly'])
+    ]),
+    el('div',{id:'auth-body-wrap',className:'auth-body'},body)
+  ]);
+}
+
+/* ── FORGOT PASSWORD: STEP 1 — Enter email ── */
+function renderForgotStep1(){
+  if(!S.supaServiceKey){
+    // No service key — can't do admin password reset. Show message.
+    return el('div',{className:'auth-wrap'},[
+      el('div',{className:'auth-hero'},[el('div',{className:'auth-app-icon'},['🫕']),el('div',{className:'auth-title'},['ZaiqaPlan']),el('div',{className:'auth-tag'},['Plan your family meals, effortlessly'])]),
+      el('div',{className:'auth-body'},[
+        el('div',{style:{fontFamily:'Playfair Display,serif',fontSize:'22px',marginBottom:'8px'}},['Reset Password']),
+        el('div',{style:{background:'var(--amberp)',border:'1px solid rgba(217,119,6,.22)',borderRadius:'10px',padding:'13px',fontSize:'13px',color:'var(--amber)',lineHeight:'1.6',marginBottom:'16px'}},[
+          '⚠️ Password reset requires the admin service key to be configured. Please contact your administrator.'
+        ]),
+        el('button',{className:'btn-ghost',style:{width:'100%'},onClick:function(){S.forgotMode=false;render();}},['← Back to Sign In'])
+      ])
+    ]);
+  }
+
+  var ei=el('input',{className:'inp',type:'email',placeholder:'Your email address',
+    onInput:function(e){S.forgotEmail=e.target.value;},
+    onKeyDown:function(e){if(e.key==='Enter')doStep1();}});
+  setTimeout(function(){ei.focus();},80);
+  ei.value=S.forgotEmail;
+
+  async function doStep1(){
+    S.forgotErr='';S.forgotOk='';
+    var email=ei.value.trim();
+    if(!email){S.forgotErr='Enter your email address';patchForgot();return;}
+    var btn=document.getElementById('fpw-btn');
+    if(btn){btn.disabled=true;while(btn.firstChild)btn.removeChild(btn.firstChild);btn.appendChild(el('span',{className:'spin'}));}
+    try{
+      var user=await adminGetUserByEmail(email);
+      if(!user) throw new Error('No account found with this email address.');
+      S.forgotEmail=email;S.forgotStep=2;render();
+    }catch(e){
+      S.forgotErr=e.message||'Could not find account';
+      if(btn){btn.disabled=false;while(btn.firstChild)btn.removeChild(btn.firstChild);btn.appendChild(document.createTextNode('Continue'));}
+      patchForgot();
+    }
+  }
+
+  function patchForgot(){
+    var m=document.getElementById('fpw-msg');
+    if(m){m.textContent=S.forgotErr||S.forgotOk;m.style.display=(S.forgotErr||S.forgotOk)?'block':'none';m.className=S.forgotOk?'fok':'ferr';}
+  }
+
+  return el('div',{className:'auth-wrap'},[
+    el('div',{className:'auth-hero'},[el('div',{className:'auth-app-icon'},['🫕']),el('div',{className:'auth-title'},['ZaiqaPlan']),el('div',{className:'auth-tag'},['Plan your family meals, effortlessly'])]),
+    el('div',{className:'auth-body'},[
+      el('div',{style:{fontFamily:'Playfair Display,serif',fontSize:'22px',marginBottom:'4px'}},['Forgot Password?']),
+      el('p',{style:{fontSize:'13px',color:'var(--brm)',marginBottom:'18px'}},["Enter your email. We'll verify your account and let you set a new password."]),
+      el('label',{className:'lbl',style:{marginTop:'0'}},['Email Address']),
+      ei,
+      el('div',{id:'fpw-msg',style:{display:S.forgotErr?'block':'none'},className:'ferr'},[S.forgotErr]),
+      el('button',{id:'fpw-btn',className:'btn-p',onClick:doStep1},['Continue →']),
+      el('div',{style:{textAlign:'center',marginTop:'12px'}},[
+        el('button',{className:'link-btn',onClick:function(){S.forgotMode=false;render();}},['← Back to Sign In'])
+      ])
+    ])
+  ]);
+}
+
+/* ── FORGOT PASSWORD: STEP 2 — Set new password ── */
+function renderForgotStep2(){
+  var pi=el('input',{className:'inp',type:'password',placeholder:'New password (min 6 chars)',
+    onInput:function(e){S.forgotNewPass=e.target.value;}});
+  var ci=el('input',{className:'inp',type:'password',placeholder:'Confirm new password',
+    onInput:function(e){S.forgotConfPass=e.target.value;},
+    onKeyDown:function(e){if(e.key==='Enter')doStep2();}});
+  setTimeout(function(){pi.focus();},80);
+
+  async function doStep2(){
+    S.forgotErr='';S.forgotOk='';
+    var np=pi.value,cp=ci.value;
+    if(np.length<6){S.forgotErr='Password must be at least 6 characters';patchForgot2();return;}
+    if(np!==cp){S.forgotErr='Passwords do not match';patchForgot2();return;}
+    var btn=document.getElementById('fpw2-btn');
+    if(btn){btn.disabled=true;while(btn.firstChild)btn.removeChild(btn.firstChild);btn.appendChild(el('span',{className:'spin'}));}
+    try{
+      var user=await adminGetUserByEmail(S.forgotEmail);
+      if(!user) throw new Error('Account not found. Please start over.');
+      await adminUpdateUserPassword(user.id,np);
+      S.forgotOk='✓ Password updated! You can now sign in.';
+      patchForgot2();
+      setTimeout(function(){S.forgotMode=false;S.forgotStep=1;S.authMode='login';S.authEmail=S.forgotEmail;render();},1800);
+    }catch(e){
+      S.forgotErr=e.message||'Failed to update password';
+      if(btn){btn.disabled=false;while(btn.firstChild)btn.removeChild(btn.firstChild);btn.appendChild(document.createTextNode('Set New Password'));}
+      patchForgot2();
+    }
+  }
+
+  function patchForgot2(){
+    var m=document.getElementById('fpw2-msg');
+    if(m){m.textContent=S.forgotErr||S.forgotOk;m.style.display=(S.forgotErr||S.forgotOk)?'block':'none';m.className=S.forgotOk?'fok':'ferr';}
+  }
+
+  return el('div',{className:'auth-wrap'},[
+    el('div',{className:'auth-hero'},[el('div',{className:'auth-app-icon'},['🫕']),el('div',{className:'auth-title'},['ZaiqaPlan']),el('div',{className:'auth-tag'},['Plan your family meals, effortlessly'])]),
+    el('div',{className:'auth-body'},[
+      el('div',{style:{fontFamily:'Playfair Display,serif',fontSize:'22px',marginBottom:'4px'}},['Set New Password']),
+      el('p',{style:{fontSize:'13px',color:'var(--brm)',marginBottom:'18px'}},['Account found for: '+S.forgotEmail]),
+      el('label',{className:'lbl',style:{marginTop:'0'}},['New Password']),pi,
+      el('label',{className:'lbl'},['Confirm Password']),ci,
+      el('div',{id:'fpw2-msg',style:{display:(S.forgotErr||S.forgotOk)?'block':'none'},className:S.forgotOk?'fok':'ferr'},[S.forgotErr||S.forgotOk]),
+      el('button',{id:'fpw2-btn',className:'btn-p',onClick:doStep2},['Set New Password']),
+      el('div',{style:{textAlign:'center',marginTop:'12px'}},[
+        el('button',{className:'link-btn',onClick:function(){S.forgotStep=1;render();}},['← Back'])
+      ])
+    ])
+  ]);
+}
+
+/* ══════════════════════════════════════════
+   ADMIN LOGIN
+   ══════════════════════════════════════════ */
+function renderAdminLogin(){
+  var pi=el('input',{className:'ai',type:'password',placeholder:'Admin password',
+    onInput:function(e){S.adminPass=e.target.value;S.adminPassErr='';},
+    onKeyDown:function(e){if(e.key==='Enter')doLogin();}});
+  // Do NOT restore value — always blank on admin login screen
+
+  function doLogin(){
+    if(S.adminPass===ADMIN_PASSWORD){
+      S.adminPass='';S.adminPassErr='';
+      S.adminUrl=S.supaUrl||HARDCODED_SUPABASE_URL;
+      S.adminKey=S.supaKey||HARDCODED_SUPABASE_ANON;
+      S.adminSvcKey=S.supaServiceKey||HARDCODED_SUPABASE_SERVICE;
+      S.adminTab='overview';S.view='admin';
+      render();loadAdminStats();
+    } else {
+      S.adminPassErr='Incorrect password';
+      var ep=document.getElementById('ap-err');if(ep)ep.textContent=S.adminPassErr;
+      S.adminPass='';pi.value='';
+    }
+  }
+
+  return el('div',{style:{background:'#1E120A',minHeight:'100%',paddingTop:'40px',display:'flex',flexDirection:'column'}},[
+    el('div',{style:{padding:'20px 18px 18px',borderBottom:'1px solid rgba(255,255,255,.07)',display:'flex',alignItems:'center',justifyContent:'space-between'}},[
+      el('div',{style:{display:'flex',alignItems:'center',gap:'10px'}},[
+        el('div',{style:{width:'38px',height:'38px',borderRadius:'11px',background:'var(--or)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px'}},['🫕']),
+        el('div',null,[el('div',{style:{fontFamily:'Playfair Display,serif',fontSize:'19px',color:'#fff',lineHeight:'1'}},['ZaiqaPlan']),el('div',{style:{fontSize:'10px',color:'rgba(255,255,255,.35)',fontWeight:'700',letterSpacing:'.08em',textTransform:'uppercase',marginTop:'2px'}},['ADMIN ACCESS'])])
+      ]),
+      el('button',{style:{background:'none',border:'none',color:'rgba(255,255,255,.35)',fontSize:'13px',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'},onClick:function(){S.view='auth';render();}},['← Back'])
+    ]),
+    el('div',{style:{flex:'1',padding:'24px 18px calc(40px + env(safe-area-inset-bottom,16px))'}},[
+      el('div',{className:'ac'},[
+        el('div',{className:'ac-title'},['🔐 Enter Password']),
+        pi,
+        el('div',{id:'ap-err',style:{fontSize:'12px',color:'#FCA5A5',fontWeight:'600',minHeight:'18px',marginTop:'4px'}},[S.adminPassErr]),
+        el('button',{className:'btn-p',style:{marginTop:'12px'},onClick:doLogin},['Unlock Admin Panel'])
+      ])
+    ])
+  ]);
+}
+
+/* ══════════════════════════════════════════
+   ADMIN DASHBOARD
+   ══════════════════════════════════════════ */
+async function loadAdminStats(){
+  S.adminStatBusy=true;patchAdminBody();
+  try{
+    var md=await dbGet('master_dishes')||[];
+    // Fetch user_dishes with service key to bypass RLS and count all users' dishes
+    var ud=[];
+    try{ ud=await sbFetch('/rest/v1/user_dishes?select=id',{},true)||[]; }
+    catch(x){ try{ ud=await dbGet('user_dishes')||[]; }catch(x2){} }
+    var users=[];
+    if(S.supaServiceKey){
+      var usersRes=await adminGetUsers().catch(function(){return null;});
+      users=(usersRes&&usersRes.users)||[];
+    }
+    S.adminStats={
+      master:md.length, userDishes:ud.length,
+      users:users.length, hasServiceKey:!!S.supaServiceKey,
+      newWeek:users.filter(function(u){return u.created_at&&(Date.now()-new Date(u.created_at))<7*864e5;}).length,
+    };
+  }catch(e){S.adminStats={master:0,userDishes:0,users:0,hasServiceKey:!!S.supaServiceKey,newWeek:0};}
+  S.adminStatBusy=false;patchAdminBody();
+}
+async function loadAdminDishes(){
+  S.adminDishBusy=true;patchAdminBody();
+  try{S.adminDishes=await dbGet('master_dishes')||[];}
+  catch(e){showToast('Load error: '+e.message);}
+  S.adminDishBusy=false;patchAdminBody();
+}
+async function loadAdminUsers(){
+  S.adminUserBusy=true;patchAdminBody();
+  // Try admin API first (needs service_role key), fall back to anon-accessible data
+  try{
+    var r=await adminGetUsers();
+    S.adminUsers=(r&&r.users)||[];
+    S.adminUsersViaAdmin=true;
+  }catch(e){
+    // anon key can't access /auth/v1/admin/users — try to get user stats from user_dishes table
+    S.adminUsers=[];
+    S.adminUsersViaAdmin=false;
+    showToast('Note: Full user list needs service_role key');
+  }
+  S.adminUserBusy=false;patchAdminBody();
+}
+
+async function loadAdminUserDishes(){
+  S.adminUserDishBusy=true;patchAdminBody();
+  try{
+    // Use service key to fetch ALL users' dishes, bypassing RLS
+    S.adminUserDishes=await sbFetch('/rest/v1/user_dishes?select=*&order=created_at.desc',{},true)||[];
+  }catch(e){
+    // fallback without service key
+    try{ S.adminUserDishes=await dbGet('user_dishes','order=created_at.desc')||[]; }
+    catch(e2){ showToast('Load error: '+e2.message); }
+  }
+  S.adminUserDishBusy=false;patchAdminBody();
+}
+async function loadAdminCats(){
+  S.adminCatBusy=true;patchAdminBody();
+  try{
+    try{
+      var customCats=await dbGet('dish_categories')||[];
+      S.adminCats=customCats;
+    }catch(x){S.adminCats=[];}
+  }catch(e){showToast('Load error: '+e.message);}
+  S.adminCatBusy=false;patchAdminBody();
+}
+
+function renderAdminUserDishes(){
+  if(S.adminUserDishBusy) return el('div',{style:{display:'flex',justifyContent:'center',padding:'40px'}},[el('div',{className:'a-spin'})]);
+  var list=S.adminUserDishes.length===0
+    ?el('div',{style:{fontSize:'13px',color:'rgba(255,255,255,.3)',textAlign:'center',padding:'16px'}},['No user-added dishes yet.'])
+    :el('div',null,S.adminUserDishes.map(function(d){
+        var nm=d.dish_name||d.name||'—';
+        return el('div',{className:'a-dish-row'},[
+          el('div',{style:{flex:'1'}},[
+            el('span',{className:'a-dish-name'},[nm]),
+            el('div',{style:{fontSize:'11px',color:'rgba(255,255,255,.3)',marginTop:'2px'}},[
+              'User: '+(d.user_id?d.user_id.substring(0,14)+'…':'—')+' · '+fmtDate(d.created_at)
+            ])
+          ]),
+          el('span',{className:'a-dish-cat'},[d.dish_category||d.category||'—']),
+          el('div',{className:'a-btns'},[
+            el('button',{className:'btn-red',onClick:async function(){
+              if(!confirm('Delete "'+nm+'"?'))return;
+              try{await dbDelete('user_dishes',d.id);S.adminUserDishes=S.adminUserDishes.filter(function(x){return x.id!==d.id;});showToast('Deleted');patchAdminBody();}
+              catch(e2){showToast('Error: '+e2.message);}
+            }},['Del'])
+          ])
+        ]);
+      }));
+  return el('div',null,[
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},[
+        '👤 User Dishes ('+S.adminUserDishes.length+')',
+        el('button',{style:{background:'none',border:'none',color:'var(--orl)',cursor:'pointer',fontSize:'16px'},onClick:loadAdminUserDishes},['↺'])
+      ]),
+      el('div',{style:{fontSize:'12px',color:'rgba(255,255,255,.35)',marginBottom:'12px'}},[
+        'Dishes added by users from their Dishes tab. You can view and delete them.'
+      ]),
+      list
+    ])
+  ]);
+}
+
+function renderAdminCategories(){
+  if(S.adminCatBusy) return el('div',{style:{display:'flex',justifyContent:'center',padding:'40px'}},[el('div',{className:'a-spin'})]);
+  var ni=el('input',{className:'ai',placeholder:'e.g. Desserts',onInput:function(e){S.adminAddCatName=e.target.value;},onKeyDown:function(e){if(e.key==='Enter')doAddCat();}});
+  ni.value=S.adminAddCatName||'';
+  var addBtn=el('button',{className:'btn-p'},['+ Add Category']);
+  var allCatsInUse=BASE_CATS.slice();
+  S.adminCats.forEach(function(c){if(allCatsInUse.indexOf(c.name)===-1)allCatsInUse.push(c.name);});
+
+  async function doAddCat(){
+    var name=(ni.value||'').trim();
+    if(!name){showToast('Enter a category name');return;}
+    var allExisting=allCatsInUse.map(function(c){return c.toLowerCase();});
+    if(allExisting.indexOf(name.toLowerCase())>-1){showToast('Category already exists');return;}
+    addBtn.disabled=true;
+    while(addBtn.firstChild)addBtn.removeChild(addBtn.firstChild);
+    addBtn.appendChild(el('span',{className:'spin'}));
+    try{
+      var rows=await dbInsert('dish_categories',{name:name});
+      var row=(rows&&rows[0])||{id:Date.now(),name:name};
+      S.adminCats.push(row);S.adminAddCatName='';ni.value='';
+      showToast('Category "'+name+'" added ✓');patchAdminBody();
+    }catch(e){
+      addBtn.disabled=false;
+      while(addBtn.firstChild)addBtn.removeChild(addBtn.firstChild);
+      addBtn.appendChild(document.createTextNode('+ Add Category'));
+      if(e.message&&(e.message.indexOf('42P01')>-1||e.message.indexOf('does not exist')>-1)){
+        showToast('Run the setup SQL below first!');
+      }else{showToast('Error: '+e.message);}
+    }
+  }
+  addBtn.addEventListener('click',doAddCat);
+
+  return el('div',null,[
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['Add Custom Category']),
+      el('div',{style:{fontSize:'12px',color:'rgba(255,255,255,.35)',marginBottom:'10px',lineHeight:'1.5'}},[
+        'Add categories beyond the defaults. Run the SQL below first if you haven\'t already.'
+      ]),
+      el('div',{className:'al',style:{marginTop:'0'}},['Category Name']),
+      ni,addBtn
+    ]),
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},[
+        '🏷️ All Categories ('+allCatsInUse.length+')',
+        el('button',{style:{background:'none',border:'none',color:'var(--orl)',cursor:'pointer',fontSize:'16px'},onClick:loadAdminCats},['↺'])
+      ]),
+      el('div',null,allCatsInUse.map(function(name){
+        var isBase=BASE_CATS.indexOf(name)>-1;
+        var customEntry=S.adminCats.find(function(c){return c.name===name;});
+        return el('div',{className:'a-dish-row'},[
+          el('span',{className:'a-dish-name'},[name]),
+          isBase
+            ?el('span',{style:{fontSize:'10px',fontWeight:'700',padding:'2px 8px',borderRadius:'20px',background:'rgba(107,140,110,.18)',color:'#9BB89E',textTransform:'uppercase',marginRight:'6px'}},['Built-in'])
+            :el('span',{style:{fontSize:'10px',fontWeight:'700',padding:'2px 8px',borderRadius:'20px',background:'rgba(232,93,44,.15)',color:'var(--orl)',textTransform:'uppercase',marginRight:'6px'}},['Custom']),
+          (!isBase&&customEntry)?el('button',{className:'btn-red',onClick:async function(){
+            if(!confirm('Delete "'+name+'"?'))return;
+            try{await dbDelete('dish_categories',customEntry.id);S.adminCats=S.adminCats.filter(function(c){return c.id!==customEntry.id;});showToast('Deleted');patchAdminBody();}
+            catch(e2){showToast('Error: '+e2.message);}
+          }},['Del']):null
+        ]);
+      }))
+    ]),
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['⚙️ One-time Setup SQL']),
+      el('div',{style:{fontSize:'12px',color:'rgba(255,255,255,.35)',marginBottom:'8px'}},[
+        'Run once in Supabase → SQL Editor → New Query:'
+      ]),
+      el('pre',{style:{fontSize:'11px',color:'rgba(255,255,255,.55)',background:'rgba(0,0,0,.3)',borderRadius:'8px',padding:'12px',overflowX:'auto',whiteSpace:'pre-wrap',wordBreak:'break-all',lineHeight:'1.7',userSelect:'text'}},
+        ['CREATE TABLE IF NOT EXISTS dish_categories (\n  id bigserial primary key,\n  name text not null unique,\n  created_at timestamptz default now()\n);\nALTER TABLE dish_categories ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "read_all" ON dish_categories FOR SELECT USING (true);\nCREATE POLICY "svc_write" ON dish_categories USING (true) WITH CHECK (true);']
+      )
+    ])
+  ]);
+}
+
+/* Admin tab renderer */
+function renderAdminBody(){
+  if(S.adminTab==='overview')   return renderAdminOverview();
+  if(S.adminTab==='config')     return renderAdminConfig();
+  if(S.adminTab==='dishes')     return renderAdminDishes();
+  if(S.adminTab==='userdishes') return renderAdminUserDishes();
+  if(S.adminTab==='categories') return renderAdminCategories();
+  if(S.adminTab==='users')      return renderAdminUsers();
+  return el('div',null,[]);
+}
+
+function patchAdminBody(){
+  var ab=document.getElementById('adm-body');
+  if(!ab)return;
+  while(ab.firstChild)ab.removeChild(ab.firstChild);
+  ab.appendChild(renderAdminBody());
+  // Fix select values
+  var sels=ab.querySelectorAll('select.ai');
+  sels.forEach(function(s){if(s.dataset.val)s.value=s.dataset.val;});
+  // Update tab underlines - find tabs in the actual DOM tab bar
+  document.querySelectorAll('.adm-tab').forEach(function(t){
+    var isOn=t.dataset.tab===S.adminTab;
+    t.className='adm-tab'+(isOn?' on':'');
+  });
+  // Edit overlay
+  var eo=document.getElementById('edit-overlay');if(!eo&&S.adminEditDish){var ne=renderEditOverlay();document.getElementById('app').appendChild(ne);}
+  if(eo&&!S.adminEditDish)eo.remove();
+}
+
+function renderAdmin(){
+  var TABS=[
+    {id:'overview',label:'📊 Overview'},
+    {id:'config',label:'⚙️ Config'},
+    {id:'dishes',label:'🍽️ Dishes'},
+    {id:'userdishes',label:'👤 User Dishes'},
+    {id:'categories',label:'🏷️ Categories'},
+    {id:'users',label:'👥 Users'},
+  ];
+  return el('div',{className:'adm-shell'},[
+    el('div',{className:'adm-topbar'},[
+      el('div',{className:'adm-topbar-row'},[
+        el('div',{className:'adm-logo'},[
+          el('div',{className:'adm-logo-icon'},['🫕']),
+          el('div',null,[el('div',{className:'adm-logo-title'},['ZaiqaPlan']),el('div',{className:'adm-logo-sub'},['Admin Dashboard'])])
+        ]),
+        el('button',{className:'adm-logout',onClick:function(){S.adminPass='';S.view='auth';render();}},['Logout'])
+      ])
+    ]),
+    el('div',{className:'adm-tabs'},
+      TABS.map(function(t){
+        return el('button',{className:'adm-tab'+(S.adminTab===t.id?' on':''),'data-tab':t.id,onClick:function(){
+          S.adminTab=t.id;
+          if(t.id==='overview')loadAdminStats();
+          else if(t.id==='dishes')loadAdminDishes();
+          else if(t.id==='userdishes')loadAdminUserDishes();
+          else if(t.id==='categories')loadAdminCats();
+          else if(t.id==='users')loadAdminUsers();
+          else patchAdminBody();
+        }},[t.label]);
+      })
+    ),
+    el('div',{id:'adm-body',className:'adm-body'},[renderAdminBody()])
+  ]);
+}
+
+function renderAdminOverview(){
+  if(S.adminStatBusy) return el('div',{style:{display:'flex',justifyContent:'center',padding:'40px'}},[el('div',{className:'a-spin'})]);
+  var cfg=S.supaUrl&&S.supaKey;
+  if(!cfg) return el('div',{className:'ac'},[el('div',{className:'ac-title'},['Setup Required']),el('p',{style:{fontSize:'13px',color:'rgba(255,255,255,.4)',lineHeight:'1.6'}},['Go to Config tab and enter your Supabase credentials.'])]);
+  var st=S.adminStats||{};
+  var noSvc=!st.hasServiceKey;
+  return el('div',null,[
+    el('div',{className:'sg'},[
+      el('div',{className:'sc sc-or'},[el('div',{className:'sc-icon'},['👥']),el('div',{className:'sc-num'},[noSvc?'—':String(st.users||0)]),el('div',{className:'sc-lbl'},['Total Users'])]),
+      el('div',{className:'sc sc-gr'},[el('div',{className:'sc-icon'},['🆕']),el('div',{className:'sc-num'},[noSvc?'—':String(st.newWeek||0)]),el('div',{className:'sc-lbl'},['New This Week'])]),
+      el('div',{className:'sc sc-bl'},[el('div',{className:'sc-icon'},['🍽️']),el('div',{className:'sc-num'},[String(st.master||0)]),el('div',{className:'sc-lbl'},['Master Dishes'])]),
+      el('div',{className:'sc sc-am'},[el('div',{className:'sc-icon'},['🥘']),el('div',{className:'sc-num'},[String(st.userDishes||0)]),el('div',{className:'sc-lbl'},['User Dishes'])]),
+    ]),
+    noSvc?el('div',{style:{background:'rgba(217,119,6,.1)',border:'1px solid rgba(217,119,6,.22)',borderRadius:'9px',padding:'11px 13px',marginBottom:'12px',fontSize:'12px',color:'#FCD34D'}},[
+      '⚠️ Add your service_role key in Config to see user counts.'
+    ]):null,
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['Quick Stats']),
+      mkStatRow('Total dishes in system',String((st.master||0)+(st.userDishes||0))),
+      mkStatRow('Master dishes',String(st.master||0)),
+      mkStatRow('User-added dishes',String(st.userDishes||0)),
+      mkStatRow('Registered users',noSvc?'Need service key':String(st.users||0)),
+    ]),
+    el('button',{className:'btn-p',onClick:loadAdminStats},['↺ Refresh'])
+  ]);
+}
+function mkStatRow(l,v){return el('div',{style:{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}},[el('span',{style:{fontSize:'13px',color:'rgba(255,255,255,.45)'}},[l]),el('span',{style:{fontSize:'14px',fontWeight:'700',color:'#fff'}},[v])]);}
+
+function renderAdminConfig(){
+  var ui=el('input',{className:'ai',placeholder:'https://xxxx.supabase.co',onInput:function(e){S.adminUrl=e.target.value;}});
+  ui.value=S.adminUrl||HARDCODED_SUPABASE_URL;
+  var ki=el('input',{className:'ai',placeholder:'anon / public key…',onInput:function(e){S.adminKey=e.target.value;}});
+  ki.value=S.adminKey||HARDCODED_SUPABASE_ANON;
+  var si=el('input',{className:'ai',placeholder:'service_role secret key (for user management)…',onInput:function(e){S.adminSvcKey=e.target.value;}});
+  si.value=S.adminSvcKey||HARDCODED_SUPABASE_SERVICE;
+
+  async function saveCfg(){
+    var url=S.adminUrl.trim().replace(/\/$/,''),key=S.adminKey.trim(),svcKey=S.adminSvcKey.trim();
+    if(!url||!key){S.adminCfgStatus='err';S.adminCfgMsg='Project URL and Anon Key are required';patchStatus();return;}
+    var oldU=S.supaUrl,oldK=S.supaKey,oldS=S.supaServiceKey;
+    S.supaUrl=url;S.supaKey=key;if(svcKey)S.supaServiceKey=svcKey;
+    try{
+      await dbGet('master_dishes','limit=1');
+      localStorage.setItem(SK.url,url);
+      localStorage.setItem(SK.key,key);
+      if(svcKey)localStorage.setItem(SK.svckey,svcKey);
+      S.adminCfgStatus='ok';
+      S.adminCfgMsg='✓ Connected and saved!'+(svcKey?' Service key saved — user management enabled.':' (Add service_role key to enable user management.)');
+    }catch(e){S.supaUrl=oldU;S.supaKey=oldK;S.supaServiceKey=oldS;S.adminCfgStatus='err';S.adminCfgMsg='✗ Failed: '+e.message;}
+    patchStatus();
+  }
+  function patchStatus(){var s=document.getElementById('cfg-st');if(s){s.className=S.adminCfgStatus==='ok'?'a-ok':'a-err';s.textContent=S.adminCfgMsg;s.style.display=S.adminCfgMsg?'block':'none';}}
+  var st=el('div',{id:'cfg-st',style:{display:S.adminCfgMsg?'block':'none'},className:S.adminCfgStatus==='ok'?'a-ok':'a-err'},[S.adminCfgMsg]);
+
+  return el('div',null,[
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['Supabase Connection']),
+      el('div',{className:'al',style:{marginTop:'0'}},['Project URL']),ui,
+      el('div',{className:'al'},['Anon / Public Key']),ki,
+      el('div',{className:'al'},['Service Role Key']),
+      el('div',{style:{fontSize:'11px',color:'rgba(255,255,255,.3)',marginBottom:'5px',lineHeight:'1.5'}},['Required for: Viewing users, Forgot Password. Get it from Supabase → Settings → API → service_role.']),
+      si,
+      st,
+      el('button',{className:'btn-p',onClick:saveCfg},['Test & Save']),
+    ]),
+    (S.supaUrl||S.supaServiceKey)?el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['Current Config']),
+      el('div',{style:{fontSize:'12px',color:'rgba(255,255,255,.4)',wordBreak:'break-all',lineHeight:'1.8'}},[
+        S.supaUrl?el('div',null,['URL: '+S.supaUrl]):null,
+        S.supaKey?el('div',null,['Anon: '+S.supaKey.substring(0,28)+'…']):null,
+        S.supaServiceKey?el('div',{style:{color:'#9BB89E'}},['✓ Service key set']):el('div',{style:{color:'#FCA5A5'}},['✗ Service key not set — add above']),
+      ])
+    ]):null,
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['Users Note']),
+      el('div',{style:{fontSize:'12px',color:'rgba(255,255,255,.35)',lineHeight:'1.7'}},[
+        'Supabase stores all registered users in its built-in ',el('strong',{style:{color:'rgba(255,255,255,.5)'}},['auth.users']),' table — you won\'t see a "users" table in the Table Editor, but users DO exist. View them in Supabase → Authentication → Users. The app reads them via the Admin API using your service_role key.'
+      ])
+    ]),
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['Danger Zone']),
+      el('button',{className:'btn-red',style:{width:'100%',padding:'11px',fontSize:'13px',borderRadius:'9px'},onClick:function(){
+        if(!confirm('Clear all credentials?'))return;
+        localStorage.removeItem(SK.url);localStorage.removeItem(SK.key);localStorage.removeItem(SK.svckey);
+        S.supaUrl='';S.supaKey='';S.supaServiceKey='';S.adminUrl='';S.adminKey='';S.adminSvcKey='';
+        S.adminCfgStatus='';S.adminCfgMsg='';patchAdminBody();
+      }},['Clear Saved Credentials'])
+    ])
+  ]);
+}
+
+function renderAdminDishes(){
+  var ni=el('input',{className:'ai',placeholder:'e.g. Chicken Biryani',onInput:function(e){S.adminAddName=e.target.value;},onKeyDown:function(e){if(e.key==='Enter')doAdminAdd();}});
+  ni.value=S.adminAddName;
+  var cs=el('select',{className:'ai',onChange:function(e){S.adminAddCat=e.target.value;}},getAddCats().map(function(c){return el('option',{value:c},[c]);}));
+  setTimeout(function(){cs.value=S.adminAddCat;},0);
+
+  async function doAdminAdd(){
+    var nameVal=ni.value.trim();
+    var catVal=cs.value;
+    if(!nameVal){showToast('Enter a dish name');return;}
+    if(!S.supaUrl){showToast('Configure Supabase first');return;}
+    // Duplicate check
+    var dup=S.adminDishes.find(function(d){return (d.name||'').toLowerCase()===nameVal.toLowerCase();});
+    if(dup){showToast('⚠️ "'+nameVal+'" already exists!');return;}
+    addBtn.disabled=true;
+    while(addBtn.firstChild)addBtn.removeChild(addBtn.firstChild);
+    addBtn.appendChild(el('span',{className:'spin'}));
+    try{
+      var rows=await dbInsert('master_dishes',{name:nameVal,category:catVal});
+      var row=(rows&&rows[0])||{id:Date.now(),name:nameVal,category:catVal};
+      S.adminDishes.push(row);
+      S.adminAddName='';ni.value='';
+      showToast('Dish added ✓');
+      patchAdminBody();
+    }catch(e){
+      addBtn.disabled=false;
+      while(addBtn.firstChild)addBtn.removeChild(addBtn.firstChild);
+      addBtn.appendChild(document.createTextNode('+ Add Dish'));
+      showToast('Error: '+e.message);
+    }
+  }
+
+  var list=S.adminDishBusy
+    ?el('div',{style:{display:'flex',justifyContent:'center',padding:'24px'}},[el('div',{className:'a-spin'})])
+    :S.adminDishes.length===0
+      ?el('div',{style:{fontSize:'13px',color:'rgba(255,255,255,.3)',textAlign:'center',padding:'16px'}},['No master dishes yet. Add one above.'])
+      :el('div',null,S.adminDishes.map(function(d){
+          return el('div',{className:'a-dish-row'},[
+            el('span',{className:'a-dish-name'},[d.name]),
+            el('span',{className:'a-dish-cat'},[d.category||'—']),
+            el('div',{className:'a-btns'},[
+              el('button',{className:'btn-blue',onClick:function(){
+            // Remove any existing overlay first
+            var existing=document.getElementById('edit-overlay');if(existing)existing.remove();
+            S.adminEditDish=d;S.adminEditName=d.name;S.adminEditCat=d.category||'Meat';
+            var ov=renderEditOverlay();document.getElementById('app').appendChild(ov);
+          }},['Edit']),
+              el('button',{className:'btn-red',onClick:async function(){if(!confirm('Delete "'+d.name+'"?'))return;try{await dbDelete('master_dishes',d.id);S.adminDishes=S.adminDishes.filter(function(x){return x.id!==d.id;});showToast('Deleted');patchAdminBody();}catch(e){showToast('Error: '+e.message);}}},['Del'])
+            ])
+          ]);
+        }));
+
+  var addBtn=el('button',{className:'btn-p',onClick:doAdminAdd},['+ Add Dish']);
+  return el('div',null,[
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},['Add New Dish']),
+      el('div',{className:'al',style:{marginTop:'0'}},['Dish Name']),ni,
+      el('div',{className:'al'},['Category']),cs,
+      addBtn
+    ]),
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},[
+        '🍽️ Master Dishes ('+S.adminDishes.length+')',
+        el('button',{style:{background:'none',border:'none',color:'var(--orl)',cursor:'pointer',fontSize:'16px'},onClick:loadAdminDishes},['↺'])
+      ]),
+      list
+    ])
+  ]);
+}
+
+function renderEditOverlay(){
+  var ni=el('input',{className:'ai'});
+  ni.value=S.adminEditName;
+  var cs=el('select',{className:'ai',style:{marginBottom:'16px'}},getAddCats().map(function(c){return el('option',{value:c},[c]);}));
+  setTimeout(function(){cs.value=S.adminEditCat;},0);
+  var saveBtn=el('button',{className:'btn-p',style:{flex:'1'}},['Save']);
+
+  async function doEdit(){
+    var name=ni.value.trim(), cat=cs.value;
+    if(!name){showToast('Dish name required');return;}
+    saveBtn.disabled=true;
+    while(saveBtn.firstChild)saveBtn.removeChild(saveBtn.firstChild);
+    saveBtn.appendChild(el('span',{className:'spin'}));
+    try{
+      await dbUpdate('master_dishes',S.adminEditDish.id,{name:name,category:cat});
+      for(var i=0;i<S.adminDishes.length;i++)if(S.adminDishes[i].id===S.adminEditDish.id){S.adminDishes[i].name=name;S.adminDishes[i].category=cat;break;}
+      S.adminEditDish=null;document.getElementById('edit-overlay').remove();showToast('Updated ✓');patchAdminBody();
+    }catch(e){
+      saveBtn.disabled=false;while(saveBtn.firstChild)saveBtn.removeChild(saveBtn.firstChild);saveBtn.appendChild(document.createTextNode('Save'));
+      showToast('Error: '+e.message);
+    }
+  }
+  saveBtn.addEventListener('click',doEdit);
+
+  return el('div',{id:'edit-overlay',className:'eo',onClick:function(e){if(e.target.id==='edit-overlay'){S.adminEditDish=null;e.target.remove();patchAdminBody();}}},[
+    el('div',{className:'ebox'},[
+      el('div',{className:'ebox-title'},['Edit Dish']),
+      el('div',{className:'al',style:{marginTop:'0'}},['Dish Name']),ni,
+      el('div',{className:'al'},['Category']),cs,
+      el('div',{style:{display:'flex',gap:'8px'}},[
+        saveBtn,
+        el('button',{className:'btn-ghost',style:{flex:'1',border:'1px solid rgba(255,255,255,.12)',color:'rgba(255,255,255,.45)',borderRadius:'9px'},onClick:function(){S.adminEditDish=null;document.getElementById('edit-overlay').remove();patchAdminBody();}},['Cancel'])
+      ])
+    ])
+  ]);
+}
+
+function renderAdminUsers(){
+  if(S.adminUserBusy) return el('div',{style:{display:'flex',justifyContent:'center',padding:'40px'}},[el('div',{className:'a-spin'})]);
+
+  var noAdminAccess = !S.adminUsersViaAdmin && S.adminUsers.length===0;
+
+  var infoBox = noAdminAccess ? el('div',{style:{background:'rgba(217,119,6,.12)',border:'1px solid rgba(217,119,6,.25)',borderRadius:'10px',padding:'12px 14px',marginBottom:'12px',fontSize:'13px',color:'#FCD34D',lineHeight:'1.6'}},[
+    el('div',{style:{fontWeight:'700',marginBottom:'4px'}},['⚠️ Service Role Key Required']),
+    el('div',null,['The Supabase Admin Users API requires your ',el('strong',null,['service_role']),' key (not the anon key). To view users:']),
+    el('ol',{style:{marginLeft:'16px',marginTop:'6px'}},['li']),
+    el('div',{style:{marginTop:'6px'}},['1. Go to Supabase → Settings → API']),
+    el('div',null,['2. Copy the ',el('strong',null,['service_role secret key'])]),
+    el('div',null,['3. Come back to Config tab and paste it as your API key']),
+    el('div',{style:{marginTop:'6px',opacity:'.7'}},['⚠️ Keep the service_role key private — never expose it to users.']),
+  ]) : null;
+
+  var list = S.adminUsers.length===0 && noAdminAccess
+    ? el('div',{style:{fontSize:'13px',color:'rgba(255,255,255,.3)',textAlign:'center',padding:'16px'}},['No user data available with current key.'])
+    : el('div',null,S.adminUsers.map(function(u){
+        var nm=(u.user_metadata&&u.user_metadata.full_name)||'—';
+        var conf=!!u.email_confirmed_at;
+        return el('div',{className:'a-user-row'},[
+          el('div',{style:{display:'flex',alignItems:'center',gap:'7px',marginBottom:'3px'}},[
+            el('span',{className:'a-user-email'},[u.email||'—']),
+            el('span',{className:'a-badge '+(conf?'a-badge-g':'a-badge-r')},[conf?'Verified':'Unverified'])
+          ]),
+          el('div',{className:'a-user-meta'},['Name: '+nm+' · Joined: '+fmtDate(u.created_at)]),
+          el('div',{style:{marginTop:'7px'}},[
+            el('button',{className:'btn-red',onClick:async function(){if(!confirm('Delete '+u.email+'? Cannot be undone.'))return;try{await adminDeleteUser(u.id);S.adminUsers=S.adminUsers.filter(function(x){return x.id!==u.id;});showToast('User deleted');patchAdminBody();}catch(e){showToast('Error: '+e.message);}}},['Delete User'])
+          ])
+        ]);
+      }));
+
+  return el('div',null,[
+    el('div',{className:'ac'},[
+      el('div',{className:'ac-title'},[
+        '👥 Users ('+S.adminUsers.length+')',
+        el('button',{style:{background:'none',border:'none',color:'var(--orl)',cursor:'pointer',fontSize:'16px'},onClick:loadAdminUsers},['↺'])
+      ]),
+      infoBox,
+      list
+    ])
+  ]);
+}
+
+/* ══════════════════════════════════════════
+   USER APP
+   ══════════════════════════════════════════ */
+async function loadDishes(){
+  S.loading=true;patchMainContent();
+  try{
+    var m=await dbGet('master_dishes');
+    var u=await dbGet('user_dishes','is_active=eq.true');
+    S.dishes=(m||[]).map(function(d){return Object.assign({},d,{_s:'m'});})
+      .concat((u||[]).map(function(d){return Object.assign({},d,{_s:'u'});}));
+  }catch(e){showToast('Load error: '+e.message);}
+  S.loading=false;patchMainContent();
+}
+
+var USER_TABS=[
+  {id:'schedule',icon:icoCal,label:'Schedule'},
+  {id:'checklist',icon:icoList,label:'Dishes'},
+  {id:'grocery',icon:icoCart,label:'Grocery'},
+  {id:'share',icon:icoShare,label:'Share'},
+  {id:'settings',icon:icoSettings,label:'Settings'},
+];
+
+function renderApp(){
+  var fn=userFirstName();
+  return el('div',{className:'app-shell'},[
+    el('div',{className:'app-hdr-wrap'},[
+      el('div',{className:'hdr'},[
+        el('div',null,[
+          el('div',{className:'hdr-brand'},['ZaiqaPlan']),
+          el('div',{className:'hdr-sub'},['Family Meal Planner'])
+        ]),
+        el('div',{className:'hdr-right'},[
+          fn?el('span',{className:'hdr-hi'},['Hi, '+fn]):null,
+        ])
+      ])
+    ]),
+    el('div',{id:'main-scroll',className:'main-scroll'}),
+    el('div',{id:'tab-bar',className:'tab-bar'},
+      USER_TABS.map(function(t){
+        var isOn=S.tab===t.id;
+        return el('button',{className:'tab-btn'+(isOn?' on':''),'data-tab':t.id,onClick:function(){
+          S.tab=t.id;
+          // Re-render all tab icons immediately so colours update
+          document.querySelectorAll('.tab-btn').forEach(function(b){
+            var active=b.dataset.tab===S.tab;
+            b.classList.toggle('on',active);
+            var tabDef=USER_TABS.find(function(x){return x.id===b.dataset.tab;});
+            if(tabDef){
+              var svg=b.querySelector('svg');
+              if(svg){var newSvg=tabDef.icon(active);b.replaceChild(newSvg,svg);}
+            }
+          });
+          patchMainContent();
+        }},[t.icon(isOn),el('span',null,[t.label])]);
+      })
+    ),
+    el('div',{id:'modal-root'})
+  ]);
+}
+
+function patchMainContent(){
+  var mc=document.getElementById('main-scroll');if(!mc)return;
+  while(mc.firstChild)mc.removeChild(mc.firstChild);
+  if(S.loading){mc.appendChild(el('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'60vh',gap:'14px'}},[el('div',{className:'big-spin'}),el('p',{style:{color:'var(--brm)',fontSize:'14px'}},['Loading…'])]));return;}
+  if(S.tab==='checklist') mc.appendChild(renderChecklist());
+  else if(S.tab==='schedule') mc.appendChild(renderSchedule());
+  else if(S.tab==='share') mc.appendChild(renderShareTab());
+  else if(S.tab==='grocery') mc.appendChild(renderGrocery());
+  else if(S.tab==='settings') mc.appendChild(renderSettings());
+  // Modals
+  var mr=document.getElementById('modal-root');
+  if(mr){while(mr.firstChild)mr.removeChild(mr.firstChild);if(S.showAddDish)mr.appendChild(renderAddDishModal());if(S.grocShowAdd)mr.appendChild(renderAddGrocModal());if(S.grocEditItem)mr.appendChild(renderEditGrocModal());}
+}
+
+/* ── CHECKLIST ── */
+function renderChecklist(){
+  var shown=S.dishes.filter(function(d){
+    var nm=(d.name||d.dish_name||'').toLowerCase(),ct=(d.category||d.dish_category||'').toLowerCase(),q=S.search.toLowerCase();
+    return(!q||nm.indexOf(q)>-1||ct.indexOf(q)>-1)&&(S.filter==='All'||(d.category||d.dish_category)===S.filter);
+  });
+  var chk=S.dishes.filter(function(d){return !isUnchecked(d.id);}).length;
+  var si=el('input',{className:'inp',style:{marginBottom:'10px'},placeholder:'🔍  Search dishes…',onInput:function(e){S.search=e.target.value;patchMainContent();}});
+  si.value=S.search;
+  var pills=el('div',{className:'pill-row'},getAllCats().map(function(c){return el('button',{className:'fpill'+(S.filter===c?' on':''),onClick:function(){S.filter=c;patchMainContent();}},[c]);}));
+  var list=shown.length===0
+    ?el('div',{className:'empty'},[el('div',{className:'empty-icon'},['🍽️']),el('p',{style:{fontWeight:'600',marginBottom:'5px'}},['No dishes found']),el('p',{style:{fontSize:'13px'}},['Tap + to add your own'])])
+    :el('div',{className:'card'},shown.map(function(d){
+        var on=!isUnchecked(d.id),nm=d.name||d.dish_name,cat=d.category||d.dish_category;
+        return el('div',{className:'dish-row'},[
+          el('div',{className:'cb'+(on?' on':''),onClick:function(){var i=S.unchecked.indexOf(d.id);if(i>-1)S.unchecked.splice(i,1);else S.unchecked.push(d.id);saveUC();patchMainContent();}},on?[icoCheck()]:[]),
+          el('div',{style:{flex:'1'}},[el('div',{style:{fontSize:'14px',fontWeight:'600',opacity:on?'1':'0.4'}},[nm]),el('span',{className:'badge '+catCls(cat)},[cat])]),
+          d._s==='u'?el('button',{className:'del-btn',onClick:async function(){if(!confirm('Remove "'+nm+'"?'))return;try{await userDelete('user_dishes',d.id);S.dishes=S.dishes.filter(function(x){return x.id!==d.id;});showToast('Removed');}catch(e){showToast('Error: '+e.message);}patchMainContent();}},['🗑']):null
+        ]);
+      }));
+  return el('div',{className:'ca'},[
+    el('div',{style:{marginBottom:'14px'}},[el('div',{className:'sec-title'},['My Dishes']),el('div',{className:'sec-sub'},[el('span',{style:{color:'var(--sa)',fontWeight:'700'}},[String(chk)]),' of '+S.dishes.length+' selected'])]),
+    si,pills,list,
+    el('button',{className:'fab',onClick:function(){S.showAddDish=true;S.addDishName='';patchMainContent();}},['＋'])
+  ]);
+}
+
+/* ── SCHEDULE ── */
+function smartGenerate(pool){
+  // Rules:
+  // 1. Same dish cannot appear in both lunch & dinner on same day
+  // 2. Meat/Chicken categories: max 1 appearance per week across ALL 14 meal slots
+  // 3. No 3 consecutive meals of same category
+  var HEAVY=['meat','chicken'];
+  function isHeavy(cat){return cat&&HEAVY.indexOf(cat.toLowerCase())>-1;}
+
+  var week=[];
+  var usedHeavyCats={}; // track which heavy cats have been used this week
+
+  // Build per-category pools
+  var heavyPool=shuffle(pool.filter(function(d){return isHeavy(d.category);}));
+  var lightPool=shuffle(pool.filter(function(d){return !isHeavy(d.category);}));
+  var allShuf=shuffle(pool);
+
+  // Pick one meal for a slot, respecting rules
+  function pick(excludeIds,excludeCats,preferLight){
+    var candidates=allShuf.filter(function(d){
+      if(excludeIds.indexOf(d.id)>-1)return false;
+      if(excludeCats.indexOf((d.category||'').toLowerCase())>-1)return false;
+      if(preferLight&&isHeavy(d.category))return false;
+      return true;
+    });
+    // If no light candidates, relax preferLight
+    if(candidates.length===0)candidates=allShuf.filter(function(d){
+      return excludeIds.indexOf(d.id)===-1&&excludeCats.indexOf((d.category||'').toLowerCase())===-1;
+    });
+    if(candidates.length===0)return allShuf[0]||pool[0]; // fallback
+    return candidates[0|Math.random()*candidates.length];
+  }
+
+  for(var d=0;d<7;d++){
+    var dayExcludeCats=[];
+    // Build heavy cat exclusions for this week so far
+    var weekHeavyUsed=[];
+    for(var k in usedHeavyCats){if(usedHeavyCats[k])weekHeavyUsed.push(k);}
+
+    // Pick lunch
+    var lunchExcludeCats=weekHeavyUsed.slice();
+    var lunch=pick([],lunchExcludeCats,false);
+    if(isHeavy(lunch.category))usedHeavyCats[lunch.category.toLowerCase()]=true;
+
+    // Update heavy exclusions after lunch
+    weekHeavyUsed=[];for(var k in usedHeavyCats){if(usedHeavyCats[k])weekHeavyUsed.push(k);}
+
+    // Pick dinner: exclude same dish as lunch, exclude used heavy cats
+    var dinnerExcludeCats=weekHeavyUsed.slice();
+    var dinner=pick([lunch.id],dinnerExcludeCats,false);
+    if(isHeavy(dinner.category))usedHeavyCats[dinner.category.toLowerCase()]=true;
+
+    week.push({lunch:lunch,dinner:dinner});
+  }
+  return week;
+}
+
+function renderSchedule(){
+  var pool=getPool();
+  var avail=pool.length;
+
+  function gen(){
+    if(avail<2){showToast('Need at least 2 checked dishes');return;}
+    S.week=smartGenerate(pool);S.weekEdit=null;saveW();showToast('Weekly plan ready! 🎉');patchMainContent();
+  }
+
+  var top=el('div',{className:'row-bet',style:{marginBottom:'18px'}},[
+    el('div',null,[el('div',{className:'sec-title'},['Weekly Plan']),el('div',{className:'sec-sub'},[avail+' dishes available'])]),
+    el('button',{className:'gen-btn',disabled:avail<2,onClick:gen},['↺ Generate'])
+  ]);
+
+  var content=(!S.week||!S.week.length)
+    ?el('div',{className:'empty',style:{paddingTop:'50px'}},[el('div',{className:'empty-icon'},['📅']),el('p',{style:{fontWeight:'600',fontSize:'16px',marginBottom:'5px'}},['No plan yet']),el('p',{style:{fontSize:'13px'}},['Select dishes then tap Generate'])])
+    :el('div',null,S.week.map(function(day,i){
+        function mealSlot(m,slotKey,label){
+          var editing=S.weekEdit&&S.weekEdit.day===i&&S.weekEdit.slot===slotKey;
+          var nameEl=el('div',{className:'meal-name',style:{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'8px'}},[
+            el('span',null,[m?m.name:'—']),
+            el('span',{style:{fontSize:'11px',color:'rgba(232,93,44,.7)',fontWeight:'700'}},[editing?'▲':'✏️'])
+          ]);
+          nameEl.addEventListener('click',function(){
+            S.weekEdit=(editing?null:{day:i,slot:slotKey});patchMainContent();
+          });
+
+          var ddEl=null;
+          if(editing){
+            var sel=el('select',{className:'inp',style:{marginTop:'8px',fontSize:'13px',padding:'9px 10px'}},
+              pool.map(function(d){return el('option',{value:d.id},[d.name+(d.category?' ('+d.category+')':'')]);})
+            );
+            setTimeout(function(){if(m)sel.value=m.id;},0);
+            sel.addEventListener('change',function(e){
+              var chosen=pool.find(function(d){return String(d.id)===e.target.value;});
+              if(chosen){S.week[i][slotKey]=chosen;saveW();S.weekEdit=null;patchMainContent();}
+            });
+            ddEl=sel;
+          }
+
+          return el('div',{className:'meal-slot'},[
+            el('div',{className:'meal-lbl'},[label]),
+            nameEl,
+            m&&m.category?el('span',{className:'badge '+catCls(m.category)},[m.category]):null,
+            ddEl
+          ]);
+        }
+
+        return el('div',{className:'day-card'},[
+          el('div',{className:'day-hdr'},[
+            el('span',{style:{color:'#fff',fontSize:'15px',fontFamily:'Playfair Display,serif'}},[DAYS[i]]),
+            el('button',{className:'shuf-btn',onClick:function(){
+              if(!pool.length)return;
+              // Reshuffle this day respecting weekly heavy rules
+              var wk=S.week;
+              var usedHeavy={};
+              for(var d2=0;d2<7;d2++){
+                if(d2===i)continue;
+                ['lunch','dinner'].forEach(function(sl){var m=wk[d2][sl];if(m&&['meat','chicken'].indexOf((m.category||'').toLowerCase())>-1)usedHeavy[(m.category||'').toLowerCase()]=true;});
+              }
+              var excHeavy=Object.keys(usedHeavy);
+              var light=pool.filter(function(d){return excHeavy.indexOf((d.category||'').toLowerCase())===-1;});
+              var src=light.length>=2?light:pool;
+              var l=src[0|Math.random()*src.length],dn=src[0|Math.random()*src.length];
+              S.week[i]={lunch:l,dinner:dn};saveW();S.weekEdit=null;patchMainContent();
+            }},['↺ Shuffle'])
+          ]),
+          el('div',{style:{padding:'11px 13px'}},[mealSlot(day.lunch,'lunch','🌤 Lunch'),mealSlot(day.dinner,'dinner','🌙 Dinner')])
+        ]);
+      }));
+  return el('div',{className:'ca'},[top,content]);
+}
+
+/* ── SHARE ── */
+function renderShareTab(){
+  function bld(){if(!S.week||!S.week.length)return'';var t='🍽 *ZaiqaPlan — Weekly Menu*\n━━━━━━━━━━━━━━━━━━━━\n\n';for(var i=0;i<S.week.length;i++){t+='📅 *'+DAYS[i]+'*\n  🌤 Lunch: '+(S.week[i].lunch?S.week[i].lunch.name:'—')+'\n  🌙 Dinner: '+(S.week[i].dinner?S.week[i].dinner.name:'—')+'\n\n';}return t+'━━━━━━━━━━━━━━━━━━━━\n_Powered by ZaiqaPlan_ 🫕';}
+  var txt=bld();
+  if(!txt)return el('div',{className:'ca'},[el('div',{className:'sec-title',style:{marginBottom:'4px'}},['Share Menu']),el('div',{className:'empty',style:{paddingTop:'50px'}},[el('div',{className:'empty-icon'},['📤']),el('p',{style:{fontWeight:'600',marginBottom:'5px'}},['No plan to share']),el('p',{style:{fontSize:'13px'}},['Generate a weekly plan first'])])]);
+  function cp(){function dn(){S.copied=true;patchMainContent();setTimeout(function(){S.copied=false;patchMainContent();},2500);}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(dn).catch(function(){fb();dn();});}else{fb();dn();}function fb(){var ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;opacity:0;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(x){}document.body.removeChild(ta);}}
+  return el('div',{className:'ca'},[
+    el('div',{className:'sec-title',style:{marginBottom:'4px'}},['Share Menu']),
+    el('p',{style:{fontSize:'13px',color:'var(--brm)',marginBottom:'16px'}},['Copy your weekly plan for WhatsApp']),
+    el('div',{style:{background:'var(--cr)',border:'1.5px solid var(--crd)',borderRadius:'12px',padding:'14px',marginBottom:'16px'}},[el('pre',{className:'share-pre'},[txt])]),
+    el('button',{className:'btn-p',style:{marginTop:'0'},onClick:cp},[el('span',{style:{fontSize:'18px'}},[S.copied?'✓':'📋']),S.copied?'Copied!':'Copy for WhatsApp']),
+    el('a',{href:'https://wa.me/?text='+encodeURIComponent(txt),target:'_blank',className:'wa-btn'},[el('span',{style:{fontSize:'18px'}},['💬']),'Open in WhatsApp'])
+  ]);
+}
+
+/* ── GROCERY ── */
+function renderGrocery(){
+  var items=S.grocItems;
+  var filtered=S.grocFilter==='pending'?items.filter(function(i){return !i.done;}):S.grocFilter==='done'?items.filter(function(i){return i.done;}):items;
+  var doneCount=items.filter(function(i){return i.done;}).length;
+
+  // Price calculations
+  var totalAll=0, totalPending=0;
+  items.forEach(function(i){
+    var p=parseFloat(i.price)||0;
+    totalAll+=p;
+    if(!i.done) totalPending+=p;
+  });
+  var hasPrices=items.some(function(i){return parseFloat(i.price)>0;});
+
+  function fmtPrice(n){return 'Rs '+n.toLocaleString('en-PK',{maximumFractionDigits:0});}
+
+  function buildGrocText(){
+    var pending=items.filter(function(i){return !i.done;});
+    var done=items.filter(function(i){return i.done;});
+    var t='🛒 *ZaiqaPlan — Grocery List*\n━━━━━━━━━━━━━━━━━━━━\n\n';
+    if(pending.length){t+='*To Buy:*\n';pending.forEach(function(i){var pr=parseFloat(i.price)>0?' — ~Rs '+i.price:'';t+='  • '+i.name+' — '+i.qty+' '+i.unit+pr+'\n';});t+='\n';}
+    if(done.length){t+='*Already Have:*\n';done.forEach(function(i){t+='  ✓ '+i.name+'\n';});}
+    if(hasPrices) t+='\n*Estimated Total: '+fmtPrice(totalPending)+'*\n';
+    t+='\n━━━━━━━━━━━━━━━━━━━━\n_ZaiqaPlan_ 🫕';
+    return t;
+  }
+
+  var top=el('div',{className:'row-bet',style:{marginBottom:'14px'}},[
+    el('div',null,[el('div',{className:'sec-title'},['Grocery List']),el('div',{className:'sec-sub'},[doneCount+'/'+items.length+' items done'])]),
+    el('button',{className:'gen-btn',onClick:function(){S.grocShowAdd=true;S.grocAddName='';S.grocAddQty='1';S.grocAddUnit='pcs';S.grocAddPrice='';patchMainContent();}},['+ Add'])
+  ]);
+
+  // Price summary card (only shown if any items have prices)
+  var priceCard = hasPrices ? el('div',{style:{background:'var(--wh)',borderRadius:'14px',boxShadow:'0 2px 12px rgba(61,44,30,.07)',padding:'14px 16px',marginBottom:'14px',display:'flex',gap:'10px'}},[
+    el('div',{style:{flex:'1',textAlign:'center',borderRight:'1px solid var(--crd)',paddingRight:'10px'}},[
+      el('div',{style:{fontSize:'11px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--brm)',marginBottom:'4px'}},['Still To Buy']),
+      el('div',{style:{fontSize:'22px',fontWeight:'700',fontFamily:'Playfair Display,serif',color:'var(--or)'}},[fmtPrice(totalPending)])
+    ]),
+    el('div',{style:{flex:'1',textAlign:'center'}},[
+      el('div',{style:{fontSize:'11px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'.06em',color:'var(--brm)',marginBottom:'4px'}},['Total List']),
+      el('div',{style:{fontSize:'22px',fontWeight:'700',fontFamily:'Playfair Display,serif',color:'var(--br)'}},[fmtPrice(totalAll)])
+    ])
+  ]) : null;
+
+  var filters=el('div',{className:'pill-row'},[
+    el('button',{className:'fpill'+(S.grocFilter==='all'?' on':''),onClick:function(){S.grocFilter='all';patchMainContent();}},['All ('+items.length+')']),
+    el('button',{className:'fpill'+(S.grocFilter==='pending'?' on':''),onClick:function(){S.grocFilter='pending';patchMainContent();}},['To Buy ('+items.filter(function(i){return !i.done;}).length+')']),
+    el('button',{className:'fpill'+(S.grocFilter==='done'?' on':''),onClick:function(){S.grocFilter='done';patchMainContent();}},['Done ('+doneCount+')']),
+  ]);
+
+  var list=filtered.length===0
+    ?el('div',{className:'empty'},[el('div',{className:'empty-icon'},['🛒']),el('p',{style:{fontWeight:'600',marginBottom:'5px'}},['No items yet']),el('p',{style:{fontSize:'13px'}},['Tap + Add to start your list'])])
+    :el('div',{className:'card'},filtered.map(function(it){
+        var price=parseFloat(it.price);
+        return el('div',{className:'groc-item'+(it.done?' done':'')},[
+          el('div',{className:'groc-cb'+(it.done?' on':''),onClick:function(){it.done=!it.done;saveGroc();patchMainContent();}},it.done?[icoCheck()]:[]),
+          el('div',{style:{flex:'1',minWidth:'0'}},[
+            el('div',{className:'groc-name',style:{marginBottom:price>0?'2px':'0'}},[it.name]),
+            price>0?el('div',{style:{fontSize:'11px',color:'var(--or)',fontWeight:'700'}},[fmtPrice(price)]):null
+          ]),
+          el('div',{className:'groc-qty'},[it.qty+' '+it.unit]),
+          el('div',{className:'groc-actions'},[
+            el('button',{className:'btn-blue',style:{padding:'4px 10px',fontSize:'11px',borderRadius:'7px'},onClick:function(){S.grocEditItem=it;S.grocEditName=it.name;S.grocEditQty=String(it.qty);S.grocEditUnit=it.unit;S.grocEditPrice=String(it.price||'');patchMainContent();}},['Edit']),
+            el('button',{className:'btn-red',style:{padding:'4px 10px',fontSize:'11px',borderRadius:'7px'},onClick:function(){S.grocItems=S.grocItems.filter(function(x){return x.id!==it.id;});saveGroc();patchMainContent();}},['Del'])
+          ])
+        ]);
+      }));
+
+  var shareRow=items.length>0?el('div',{style:{marginTop:'14px',display:'flex',gap:'8px',flexWrap:'wrap'}},[
+    el('button',{className:'btn-p',style:{marginTop:'0',flex:'1',minWidth:'120px'},onClick:function(){
+      var txt=buildGrocText();
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){showToast('List copied! 📋');}).catch(function(){showToast('Copy failed');});}
+      else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showToast('List copied! 📋');}catch(x){showToast('Copy failed');}document.body.removeChild(ta);}
+    }},[el('span',{style:{fontSize:'16px'}},['📋']),'Copy List']),
+    el('a',{href:'https://wa.me/?text='+encodeURIComponent(buildGrocText()),target:'_blank',className:'wa-btn',style:{flex:'1',minWidth:'120px',marginTop:'0'}},[el('span',{style:{fontSize:'16px'}},['💬']),'WhatsApp']),
+    items.length>0&&doneCount>0?el('button',{className:'btn-ghost',style:{flex:'1',minWidth:'120px'},onClick:function(){if(!confirm('Clear all done items?'))return;S.grocItems=S.grocItems.filter(function(i){return !i.done;});saveGroc();patchMainContent();}},['🗑 Clear Done']):null,
+  ]):null;
+
+  var clearAll=items.length>0?el('div',{style:{textAlign:'center',marginTop:'10px'}},[
+    el('button',{className:'link-btn',style:{fontSize:'12px'},onClick:function(){if(!confirm('Clear entire grocery list?'))return;S.grocItems=[];saveGroc();patchMainContent();}},['Clear entire list'])
+  ]):null;
+
+  return el('div',{className:'ca'},[top,priceCard,filters,list,shareRow,clearAll]);
+}
+
+function renderAddGrocModal(){
+  var ni=el('input',{className:'inp',placeholder:'e.g. Tomatoes',onInput:function(e){S.grocAddName=e.target.value;},onKeyDown:function(e){if(e.key==='Enter')doAdd();}});
+  ni.value=S.grocAddName;
+  setTimeout(function(){ni.focus();},80);
+  var qi=el('input',{className:'inp',type:'text',inputmode:'decimal',placeholder:'Quantity e.g. 2',onInput:function(e){S.grocAddQty=e.target.value;}});
+  qi.value=S.grocAddQty;
+  var us=el('select',{className:'inp',onChange:function(e){S.grocAddUnit=e.target.value;}},GROC_UNITS.map(function(u){return el('option',{value:u},[u]);}));
+  setTimeout(function(){us.value=S.grocAddUnit;},0);
+  var pi=el('input',{className:'inp',type:'text',inputmode:'decimal',placeholder:'Price in Rs (optional)',style:{marginBottom:'0'},onInput:function(e){S.grocAddPrice=e.target.value;}});
+  pi.value=S.grocAddPrice||'';
+
+  function doAdd(){
+    var name=ni.value.trim(), qty=qi.value||'1', unit=us.value, price=pi.value.trim();
+    if(!name){showToast('Enter item name');return;}
+    S.grocItems.push({id:Date.now(),name:name,qty:qty,unit:unit,price:price,done:false});
+    saveGroc();
+    S.grocAddName='';S.grocAddQty='1';S.grocAddUnit='pcs';S.grocAddPrice='';S.grocShowAdd=false;
+    showToast('Item added ✓');patchMainContent();
+  }
+
+  return el('div',{className:'overlay',onClick:function(e){if(e.target.classList.contains('overlay')){S.grocShowAdd=false;patchMainContent();}}},[
+    el('div',{className:'sheet'},[
+      el('div',{className:'drag'}),
+      el('h2',{style:{fontSize:'20px',marginBottom:'18px'}},['Add Grocery Item']),
+      el('label',{className:'lbl',style:{marginTop:'0'}},['Item Name']),ni,
+      el('label',{className:'lbl'},['Quantity']),qi,
+      el('label',{className:'lbl'},['Unit']),us,
+      el('label',{className:'lbl'},['Price (Rs) — optional']),pi,
+      el('button',{className:'btn-p',onClick:doAdd},['Add Item'])
+    ])
+  ]);
+}
+
+function renderEditGrocModal(){
+  var it=S.grocEditItem;
+  var ni=el('input',{className:'inp',onInput:function(e){S.grocEditName=e.target.value;}});
+  ni.value=S.grocEditName||it.name;
+  var qi=el('input',{className:'inp',type:'text',inputmode:'decimal',onInput:function(e){S.grocEditQty=e.target.value;}});
+  qi.value=S.grocEditQty||String(it.qty);
+  var us=el('select',{className:'inp',onChange:function(e){S.grocEditUnit=e.target.value;}},GROC_UNITS.map(function(u){return el('option',{value:u},[u]);}));
+  setTimeout(function(){us.value=S.grocEditUnit||it.unit;},0);
+  var pi=el('input',{className:'inp',type:'text',inputmode:'decimal',placeholder:'Price in Rs (optional)',style:{marginBottom:'0'},onInput:function(e){S.grocEditPrice=e.target.value;}});
+  pi.value=S.grocEditPrice!==undefined?S.grocEditPrice:String(it.price||'');
+
+  function doSave(){
+    var name=ni.value.trim(), qty=qi.value, unit=us.value, price=pi.value.trim();
+    if(!name)return;
+    it.name=name;it.qty=qty;it.unit=unit;it.price=price;
+    saveGroc();S.grocEditItem=null;showToast('Updated ✓');patchMainContent();
+  }
+
+  return el('div',{className:'overlay',onClick:function(e){if(e.target.classList.contains('overlay')){S.grocEditItem=null;patchMainContent();}}},[
+    el('div',{className:'sheet'},[
+      el('div',{className:'drag'}),
+      el('h2',{style:{fontSize:'20px',marginBottom:'18px'}},['Edit Item']),
+      el('label',{className:'lbl',style:{marginTop:'0'}},['Item Name']),ni,
+      el('label',{className:'lbl'},['Quantity']),qi,
+      el('label',{className:'lbl'},['Unit']),us,
+      el('label',{className:'lbl'},['Price (Rs) — optional']),pi,
+      el('div',{style:{display:'flex',gap:'8px',marginTop:'14px'}},[
+        el('button',{className:'btn-p',style:{marginTop:'0',flex:'1'},onClick:doSave},['Save']),
+        el('button',{className:'btn-ghost',style:{flex:'1'},onClick:function(){S.grocEditItem=null;patchMainContent();}},['Cancel'])
+      ])
+    ])
+  ]);
+}
+
+/* ── SETTINGS ── */
+function renderSettings(){
+  var u=S.session&&S.session.user;
+  var currEmail=u&&u.email||'';
+  var currName=u&&u.user_metadata&&u.user_metadata.full_name||'';
+  if(!S.settEmail&&currEmail)S.settEmail=currEmail;
+  if(!S.settName&&currName)S.settName=currName;
+
+  var ni=el('input',{className:'inp',placeholder:'Full name',onInput:function(e){S.settName=e.target.value;}});
+  ni.value=S.settName;
+  var ei=el('input',{className:'inp',type:'email',placeholder:'Email address',onInput:function(e){S.settEmail=e.target.value;}});
+  ei.value=S.settEmail;
+  var pi=el('input',{className:'inp',type:'password',placeholder:'New password (leave blank to keep)',onInput:function(e){S.settNewPass=e.target.value;}});
+  pi.value='';
+
+  async function saveSettings(){
+    S.settErr='';S.settOk='';
+    var updates={};
+    if(S.settName.trim()&&S.settName.trim()!==currName) updates.data={full_name:S.settName.trim()};
+    if(S.settEmail.trim()&&S.settEmail.trim()!==currEmail) updates.email=S.settEmail.trim();
+    if(S.settNewPass.trim()){
+      if(S.settNewPass.trim().length<6){S.settErr='New password must be at least 6 characters';patchMainContent();return;}
+      updates.password=S.settNewPass.trim();
+    }
+    if(!Object.keys(updates).length){S.settOk='Nothing to update';patchMainContent();return;}
+    S.settBusy=true;patchMainContent();
+    try{
+      await authUpdateUser(updates);
+      S.settOk='✓ Profile updated!';S.settNewPass='';
+      if(updates.data&&S.session&&S.session.user&&S.session.user.user_metadata){
+        S.session.user.user_metadata.full_name=S.settName.trim();
+        localStorage.setItem(SK.sess,JSON.stringify(S.session));
+      }
+    }catch(e){S.settErr='Error: '+e.message;}
+    S.settBusy=false;patchMainContent();
+  }
+
+  // Feedback section
+  var fta=el('textarea',{className:'inp',rows:6,placeholder:'Describe your suggestion or problem (up to 500 characters)…',
+    onInput:function(e){
+      var v=e.target.value;if(v.length>500)v=v.substring(0,500);
+      S.feedbackText=v;e.target.value=v;
+      var cnt=document.getElementById('fb-count');if(cnt)cnt.textContent=v.length+'/500';
+      var btn=document.getElementById('fb-btn');if(btn)btn.disabled=!v.trim();
+    }});
+  fta.value=S.feedbackText;
+  fta.style.resize='vertical';fta.style.minHeight='120px';fta.style.marginBottom='4px';
+
+  async function sendFeedback(){
+    var txt=fta.value.trim();
+    if(!txt)return;
+    S.feedbackBusy=true;S.feedbackOk='';S.feedbackErr='';
+    var btn=document.getElementById('fb-btn');
+    if(btn){btn.disabled=true;while(btn.firstChild)btn.removeChild(btn.firstChild);btn.appendChild(el('span',{className:'spin'}));}
+    try{
+      // Use mailto as universal solution — works on mobile APK too
+      var subject='ZaiqaPlan Feedback from '+(currEmail||'User');
+      var body='From: '+(currName||'User')+' <'+(currEmail||'unknown')+'>\n\n'+txt;
+      var mailto='mailto:shanawar.rapidflow+support@gmail.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+      window.location.href=mailto;
+      S.feedbackText='';fta.value='';
+      S.feedbackOk='✓ Opening email app to send your message!';
+    }catch(e){S.feedbackErr='Could not open email: '+e.message;}
+    S.feedbackBusy=false;
+    if(btn){btn.disabled=!fta.value.trim();while(btn.firstChild)btn.removeChild(btn.firstChild);btn.appendChild(document.createTextNode('Send Feedback'));}
+    var m=document.getElementById('fb-msg');
+    if(m){m.textContent=S.feedbackOk||S.feedbackErr;m.style.display=(S.feedbackOk||S.feedbackErr)?'block':'none';m.className=S.feedbackOk?'fok':'ferr';}
+  }
+
+  var fbBtn=el('button',{id:'fb-btn',className:'btn-p',disabled:!S.feedbackText.trim(),onClick:sendFeedback},['Send Feedback']);
+
+  return el('div',{className:'ca'},[
+    el('div',{className:'sec-title',style:{marginBottom:'16px'}},['Settings']),
+
+    // Current info
+    el('div',{className:'sett-section'},[
+      el('div',{className:'sett-row'},[el('span',{className:'sett-label'},['Email']),el('span',{className:'sett-val'},[currEmail])]),
+      el('div',{className:'sett-row'},[el('span',{className:'sett-label'},['Name']),el('span',{className:'sett-val'},[currName||'—'])]),
+    ]),
+
+    // Update profile
+    el('div',{style:{background:'var(--wh)',borderRadius:'14px',boxShadow:'0 2px 12px rgba(61,44,30,.07)',padding:'16px',marginBottom:'14px'}},[
+      el('div',{style:{fontWeight:'700',fontSize:'14px',marginBottom:'14px',color:'var(--br)'}},['Update Profile']),
+      el('label',{className:'lbl',style:{marginTop:'0'}},['Full Name']),ni,
+      el('label',{className:'lbl'},['Email Address']),ei,
+      el('label',{className:'lbl'},['New Password']),pi,
+      S.settOk?el('div',{className:'fok',style:{marginTop:'10px'}},[S.settOk]):null,
+      S.settErr?el('div',{className:'ferr',style:{marginTop:'10px'}},[S.settErr]):null,
+      el('button',{className:'btn-p',disabled:S.settBusy,onClick:saveSettings},[S.settBusy?el('span',{className:'spin'}):'Save Changes'])
+    ]),
+
+    // Feedback
+    el('div',{style:{background:'var(--wh)',borderRadius:'14px',boxShadow:'0 2px 12px rgba(61,44,30,.07)',padding:'16px',marginBottom:'14px'}},[
+      el('div',{style:{fontWeight:'700',fontSize:'14px',marginBottom:'4px',color:'var(--br)'}},['💬 Suggestions or Problems']),
+      el('p',{style:{fontSize:'13px',color:'var(--brm)',marginBottom:'12px'}},['Tell us what you think — we read every message.']),
+      el('label',{className:'lbl',style:{marginTop:'0'}},['Your Message']),
+      fta,
+      el('div',{style:{textAlign:'right',fontSize:'11px',color:'var(--brm)',marginBottom:'8px'},id:'fb-count'},[S.feedbackText.length+'/500']),
+      el('div',{id:'fb-msg',style:{display:(S.feedbackOk||S.feedbackErr)?'block':'none'},className:S.feedbackOk?'fok':'ferr'},[S.feedbackOk||S.feedbackErr]),
+      fbBtn
+    ]),
+
+    // Sign out
+    el('div',{style:{background:'var(--redp)',borderRadius:'14px',padding:'16px',marginBottom:'14px'}},[
+      el('div',{style:{fontWeight:'700',fontSize:'14px',marginBottom:'8px',color:'var(--red)'}},['Sign Out']),
+      el('button',{className:'btn-red',style:{width:'100%',padding:'12px',fontSize:'14px',borderRadius:'10px'},onClick:async function(){
+        if(!confirm('Sign out?'))return;
+        await authSignOut();S.view='auth';S.dishes=[];S.week=null;S.tab='schedule';render();
+      }},['Sign Out'])
+    ])
+  ]);
+}
+
+/* ── ADD DISH MODAL ── */
+function renderAddDishModal(){
+  var ni=el('input',{className:'inp',placeholder:'e.g. Daal Makhani',onInput:function(e){S.addDishName=e.target.value;},onKeyDown:function(e){if(e.key==='Enter')doAdd();}});
+  ni.value=S.addDishName;
+  setTimeout(function(){ni.focus();},80);
+  var cs=el('select',{className:'inp',style:{marginBottom:'0'},onChange:function(e){S.addDishCat=e.target.value;}},getAddCats().map(function(c){return el('option',{value:c},[c]);}));
+  setTimeout(function(){cs.value=S.addDishCat;},0);
+  var addBtn=el('button',{className:'btn-p'},['Add Dish']);
+
+  async function doAdd(){
+    var name=ni.value.trim(), cat=cs.value;
+    if(!name){showToast('Enter a dish name');return;}
+    // Duplicate check
+    var dup=S.dishes.find(function(d){return (d.name||d.dish_name||'').toLowerCase()===name.toLowerCase();});
+    if(dup){showToast('⚠️ "'+name+'" already exists!');return;}
+    // Disable button in-place — do NOT call patchMainContent (it destroys this modal)
+    addBtn.disabled=true;
+    while(addBtn.firstChild)addBtn.removeChild(addBtn.firstChild);
+    addBtn.appendChild(el('span',{className:'spin'}));
+    var uid=S.session&&S.session.user?S.session.user.id:null;
+    try{
+      var rows=await userInsert('user_dishes',{dish_name:name,dish_category:cat,is_active:true,user_id:uid});
+      var row=rows&&rows[0]?rows[0]:{id:Date.now(),dish_name:name,dish_category:cat,is_active:true};
+      row._s='u';S.dishes.push(row);
+      S.addDishName='';S.showAddDish=false;
+      showToast('Dish added ✓');
+      patchMainContent(); // re-render now that modal should close
+    }catch(e){
+      showToast('Error: '+e.message);
+      addBtn.disabled=false;
+      while(addBtn.firstChild)addBtn.removeChild(addBtn.firstChild);
+      addBtn.appendChild(document.createTextNode('Add Dish'));
+    }
+  }
+
+  addBtn.addEventListener('click',doAdd);
+
+  return el('div',{className:'overlay',onClick:function(e){if(e.target.classList.contains('overlay')){S.showAddDish=false;patchMainContent();}}},[
+    el('div',{className:'sheet'},[
+      el('div',{className:'drag'}),
+      el('h2',{style:{fontSize:'20px',marginBottom:'18px'}},['Add Your Dish']),
+      el('label',{className:'lbl',style:{marginTop:'0'}},['Dish Name']),ni,
+      el('label',{className:'lbl'},['Category']),cs,
+      addBtn
+    ])
+  ]);
+}
+
+/* ══ MAIN RENDER ══ */
+function render(){
+  var app=document.getElementById('app');while(app.firstChild)app.removeChild(app.firstChild);
+  if(S.view==='admin-login'){app.appendChild(renderAdminLogin());}
+  else if(S.view==='admin'){app.appendChild(renderAdmin());renderToast();}
+  else if(S.view==='auth'){app.appendChild(renderAuth());}
+  else if(S.view==='app'){app.appendChild(renderApp());patchMainContent();}
+  renderToast();
+}
+
+/* ── KEYBOARD / SHEET FIX ── */
+// Use visualViewport to detect keyboard and push overlay above it
+(function(){
+  function onViewportChange(){
+    var vv = window.visualViewport;
+    if(!vv) return;
+    var kbHeight = window.innerHeight - vv.height - vv.offsetTop;
+    if(kbHeight < 50) kbHeight = 0;
+    // Move all overlays up by keyboard height
+    document.querySelectorAll('.overlay').forEach(function(ov){
+      ov.style.bottom = kbHeight + 'px';
+      ov.style.top = '0';
+      ov.style.height = (window.innerHeight - kbHeight) + 'px';
+    });
+    // Move admin edit overlay content up
+    document.querySelectorAll('.eo').forEach(function(eo){
+      eo.style.paddingBottom = (kbHeight + 20) + 'px';
+    });
+    // Scroll focused input into view in sheet
+    var focused = document.activeElement;
+    if(focused && (focused.tagName==='INPUT'||focused.tagName==='TEXTAREA'||focused.tagName==='SELECT')){
+      setTimeout(function(){
+        focused.scrollIntoView({behavior:'smooth', block:'center'});
+      }, 50);
+    }
+  }
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', onViewportChange);
+    window.visualViewport.addEventListener('scroll', onViewportChange);
+  }
+  // Also handle focus events for auth page and non-overlay inputs
+  document.addEventListener('focus', function(e){
+    var el = e.target;
+    if(el && (el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.tagName==='SELECT')){
+      setTimeout(function(){ el.scrollIntoView({behavior:'smooth', block:'center'}); }, 400);
+    }
+  }, true);
+})();
+
+/* ══ INIT ══ */
+function init(){
+  setTimeout(function(){
+    var sp=document.getElementById('splash');
+    if(sp){sp.classList.add('hide');setTimeout(function(){sp.style.display='none';},520);}
+    if(S.session&&S.session.access_token){S.view='app';render();loadDishes();}
+    else{S.view='auth';render();}
+  },2200);
+}
+
+// Run immediately — no event listener needed since this script is at end of body
+// Also hook events as backup for different WebView environments
+var _initDone=false;
+function _safeInit(){if(_initDone)return;_initDone=true;init();}
+
+// Immediate call — works when script runs after DOM is ready
+_safeInit();
+
+// Backups in case DOM wasn't ready yet
+document.addEventListener('DOMContentLoaded',_safeInit);
+window.addEventListener('load',_safeInit);
+</script>
+</body>
+</html>
