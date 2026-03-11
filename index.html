@@ -64,7 +64,7 @@ select.inp{cursor:pointer;}
 .lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--brm);display:block;margin-bottom:6px;margin-top:14px;}
 .lbl:first-child{margin-top:0;}
 .ferr{font-size:12px;color:var(--red);font-weight:600;padding:9px 12px;background:var(--redp);border-radius:8px;margin-top:8px;}
-.fok{font-size:12px;color:var(--sa);font-weight:600;padding:9px 12px;background:var(--sap);border-radius:8px;margin-top:8px;}
+.fok{font-size:13px;color:#166534;font-weight:600;padding:12px 14px;background:#dcfce7;border:1px solid #86efac;border-radius:10px;margin-top:8px;line-height:1.5;}
 
 /* ══ BUTTONS ══ */
 .btn-p{background:var(--or);color:#fff;border:none;border-radius:12px;padding:14px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 16px rgba(232,93,44,.25);display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s;margin-top:14px;}
@@ -364,6 +364,7 @@ async function sbFetch(path,opts,svc){
     else if(msg.indexOf('Email not confirmed')>-1) msg='Please confirm your email first — check your inbox.';
     else if(msg.indexOf('Password should be')>-1) msg='Password must be at least 6 characters.';
     else if(msg.indexOf('Unable to validate email')>-1) msg='Please enter a valid email address.';
+    else if(msg.indexOf('rate limit')>-1||msg.indexOf('too many')>-1||msg.indexOf('429')>-1) msg='Too many attempts — please wait a few minutes and try again.';
     throw new Error(msg);
   }
   return j;
@@ -379,8 +380,7 @@ async function userInsert(t,o){return sbFetch('/rest/v1/'+t,{method:'POST',heade
 async function userDelete(t,id){return sbFetch('/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE'});}
 /* Auth */
 async function authSignUp(e,p,n){
-  // Pass the current page URL as redirect so confirmation link works on Netlify/any host
-  var redirectTo=window.location.origin+window.location.pathname;
+  var redirectTo='https://zaiqaplan.netlify.app/';
   return sbFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:e,password:p,data:{full_name:n},options:{emailRedirectTo:redirectTo}})});
 }
 async function authSignIn(e,p){return sbFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:e,password:p})});}
@@ -487,7 +487,7 @@ function renderAuth(){
         if(res.user&&res.user.id){
           S.authBusy=false;
           S.authPass='';S.authName='';
-          S.authOk='✓ Account created! Check your email for a confirmation link, then sign in.';
+          S.authOk='📧 Account created! We sent a confirmation email to '+S.authEmail.trim()+'. Please click the link in the email to verify your account, then sign in here.';
           S.authMode='login';
           render();
           return;
@@ -495,7 +495,7 @@ function renderAuth(){
 
         // Fallback
         S.authBusy=false;
-        S.authOk='✓ Account created! Please sign in.';
+        S.authOk='📧 Account created! Please check your email to confirm, then sign in.';
         S.authMode='login';render();
       }).catch(function(e){S.authBusy=false;S.authErr=e.message||'Sign up failed';render();});
     }
@@ -1810,20 +1810,40 @@ function init(){
     var params={};
     hash.replace('#','').split('&').forEach(function(p){var kv=p.split('=');params[decodeURIComponent(kv[0])]=decodeURIComponent(kv[1]||'');});
     if(params.access_token){
-      // Build a session object from the hash params
-      var sess={access_token:params.access_token,refresh_token:params.refresh_token||'',token_type:params.token_type||'bearer'};
-      // Get user info
+      var type=params.type||'';
+      // Clean URL hash immediately
+      history.replaceState(null,'',window.location.pathname);
+      // Hide splash fast
+      var sp=document.getElementById('splash');
+      if(sp){sp.classList.add('hide');setTimeout(function(){sp.style.display='none';},520);}
+
+      if(type==='recovery'){
+        // Password reset link — go to reset password screen
+        S.session={access_token:params.access_token,refresh_token:params.refresh_token||'',token_type:'bearer'};
+        localStorage.setItem(SK.sess,JSON.stringify(S.session));
+        S.view='auth';S.forgotMode=true;S.forgotStep=2;render();
+        return;
+      }
+
+      // type === 'signup' or 'email_change' — email confirmed, log them in
       sbFetch('/auth/v1/user',{headers:{'apikey':S.supaKey,'Authorization':'Bearer '+params.access_token}}).then(function(user){
-        sess.user=user;
+        var sess={access_token:params.access_token,refresh_token:params.refresh_token||'',token_type:'bearer',user:user};
         S.session=sess;localStorage.setItem(SK.sess,JSON.stringify(sess));
-        // Clean URL hash
-        history.replaceState(null,'',window.location.pathname);
-        var sp=document.getElementById('splash');
-        if(sp){sp.classList.add('hide');setTimeout(function(){sp.style.display='none';},520);}
-        S.view='app';render();loadDishes();
+        // Show confirmation success then go to app
+        S.view='auth';
+        S.authOk='✅ Email confirmed! You are now signed in.';
+        S.authMode='login';
+        render();
+        // Auto-proceed to app after short delay
+        setTimeout(function(){
+          S.authOk='';S.view='app';render();loadDishes();
+        },2000);
       }).catch(function(){
         history.replaceState(null,'',window.location.pathname);
-        S.view='auth';render();
+        S.view='auth';
+        S.authOk='✅ Email confirmed! Please sign in.';
+        S.authMode='login';
+        render();
       });
       return;
     }
