@@ -4,6 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,interactive-widget=resizes-content"/>
 <title>ZaiqaPlan</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23E85D2C'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' dominant-baseline='hanging' dy='10'>🫕</text></svg>"/>
+<link rel="alternate icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAB9SURBVFhH7ZaxCsAgDET9/6/OVgqFkr2kN2TJB3HxHjEZRERERER+A3hm5u4OAAAAAAD8R2ZuZmZmIiIiIiIiIsuyLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAqBcAAP//"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23E85D2C'/><text y='.9em' font-size='72' x='50%' text-anchor='middle' dominant-baseline='hanging' dy='10'>🫕</text></svg>"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -348,7 +351,21 @@ function sbH(svc){
 async function sbFetch(path,opts,svc){
   var r=await fetch(S.supaUrl+path,Object.assign({headers:sbH(svc)},opts||{}));
   var txt=await r.text();var j;try{j=JSON.parse(txt);}catch(x){j=txt;}
-  if(!r.ok) throw new Error((j&&j.message)||(j&&j.error_description)||String(j)||('HTTP '+r.status));
+  if(!r.ok){
+    var msg='HTTP '+r.status;
+    if(j&&typeof j==='object'){
+      msg=j.message||j.error_description||j.error||j.msg||j.hint||JSON.stringify(j);
+    }else if(typeof j==='string'&&j.length){
+      msg=j;
+    }
+    // Make common Supabase errors human-readable
+    if(msg.indexOf('User already registered')>-1) msg='An account with this email already exists. Please sign in.';
+    else if(msg.indexOf('Invalid login credentials')>-1) msg='Incorrect email or password.';
+    else if(msg.indexOf('Email not confirmed')>-1) msg='Please confirm your email first — check your inbox.';
+    else if(msg.indexOf('Password should be')>-1) msg='Password must be at least 6 characters.';
+    else if(msg.indexOf('Unable to validate email')>-1) msg='Please enter a valid email address.';
+    throw new Error(msg);
+  }
   return j;
 }
 /* Table CRUD — uses anon/user token (RLS applies) */
@@ -361,7 +378,11 @@ async function dbDelete(t,id){return sbFetch('/rest/v1/'+t+'?id=eq.'+id,{method:
 async function userInsert(t,o){return sbFetch('/rest/v1/'+t,{method:'POST',headers:Object.assign({},sbH(false),{'Prefer':'return=representation'}),body:JSON.stringify(o)});}
 async function userDelete(t,id){return sbFetch('/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE'});}
 /* Auth */
-async function authSignUp(e,p,n){return sbFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:e,password:p,data:{full_name:n}})});}
+async function authSignUp(e,p,n){
+  // Pass the current page URL as redirect so confirmation link works on Netlify/any host
+  var redirectTo=window.location.origin+window.location.pathname;
+  return sbFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:e,password:p,data:{full_name:n},options:{emailRedirectTo:redirectTo}})});
+}
 async function authSignIn(e,p){return sbFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:e,password:p})});}
 async function authSignOut(){try{await sbFetch('/auth/v1/logout',{method:'POST'});}catch(x){}S.session=null;localStorage.removeItem(SK.sess);}
 async function authReset(e){return sbFetch('/auth/v1/recover',{method:'POST',body:JSON.stringify({email:e})});}
@@ -443,39 +464,39 @@ function renderAuth(){
     S.authBusy=true;render();
     if(isLogin){
       authSignIn(S.authEmail.trim(),S.authPass).then(function(res){
-        if(res.error)throw new Error(res.error.message||res.error);
+        if(res.error)throw new Error(typeof res.error==='object'?(res.error.message||res.error.error_description||JSON.stringify(res.error)):String(res.error));
         S.session=res;localStorage.setItem(SK.sess,JSON.stringify(res));
         S.authEmail='';S.authPass='';S.authName='';S.authErr='';S.authOk='';S.authBusy=false;
         S.view='app';render();loadDishes();
       }).catch(function(e){S.authBusy=false;S.authErr=e.message||'Sign in failed';render();});
     } else {
     authSignUp(S.authEmail.trim(),S.authPass,S.authName.trim()).then(function(res){
-        if(res.error)throw new Error(res.error.message||res.error);
-        // If we got a session (email confirmations disabled), log straight in
+        if(res.error)throw new Error(typeof res.error==='object'?(res.error.message||res.error.error_description||JSON.stringify(res.error)):String(res.error));
+
+        // Case 1: email confirmations OFF — got access_token immediately, log straight in
         if(res.access_token){
           S.session=res;localStorage.setItem(SK.sess,JSON.stringify(res));
           S.authEmail='';S.authPass='';S.authName='';S.authConfPass='';
           S.authErr='';S.authOk='';S.authBusy=false;
           S.view='app';render();loadDishes();
-        } else if(res.user&&res.user.id&&!res.user.email_confirmed_at){
-          // Email confirmations enabled — auto sign in with credentials
-          authSignIn(S.authEmail.trim(),S.authPass).then(function(r2){
-            if(r2.error)throw new Error(r2.error.message||r2.error);
-            S.session=r2;localStorage.setItem(SK.sess,JSON.stringify(r2));
-            S.authEmail='';S.authPass='';S.authName='';
-            S.authErr='';S.authOk='';S.authBusy=false;
-            S.view='app';render();loadDishes();
-          }).catch(function(){
-            // fallback: tell them to sign in
-            S.authBusy=false;S.authPass='';
-            S.authOk='✓ Account created! Please sign in.';
-            S.authMode='login';render();
-          });
-        } else {
-          S.authBusy=false;
-          S.authOk='✓ Account created! Please sign in.';
-          S.authMode='login';render();
+          return;
         }
+
+        // Case 2: email confirmations ON — user created but needs to confirm
+        // Supabase returns {user: {..., email_confirmed_at: null}, session: null}
+        if(res.user&&res.user.id){
+          S.authBusy=false;
+          S.authPass='';S.authName='';
+          S.authOk='✓ Account created! Check your email for a confirmation link, then sign in.';
+          S.authMode='login';
+          render();
+          return;
+        }
+
+        // Fallback
+        S.authBusy=false;
+        S.authOk='✓ Account created! Please sign in.';
+        S.authMode='login';render();
       }).catch(function(e){S.authBusy=false;S.authErr=e.message||'Sign up failed';render();});
     }
   }
@@ -1782,6 +1803,32 @@ function render(){
 
 /* ══ INIT ══ */
 function init(){
+  // Check if Supabase redirected back after email confirmation
+  // URL hash will contain #access_token=...&type=signup or type=recovery
+  var hash=window.location.hash;
+  if(hash&&hash.indexOf('access_token')>-1){
+    var params={};
+    hash.replace('#','').split('&').forEach(function(p){var kv=p.split('=');params[decodeURIComponent(kv[0])]=decodeURIComponent(kv[1]||'');});
+    if(params.access_token){
+      // Build a session object from the hash params
+      var sess={access_token:params.access_token,refresh_token:params.refresh_token||'',token_type:params.token_type||'bearer'};
+      // Get user info
+      sbFetch('/auth/v1/user',{headers:{'apikey':S.supaKey,'Authorization':'Bearer '+params.access_token}}).then(function(user){
+        sess.user=user;
+        S.session=sess;localStorage.setItem(SK.sess,JSON.stringify(sess));
+        // Clean URL hash
+        history.replaceState(null,'',window.location.pathname);
+        var sp=document.getElementById('splash');
+        if(sp){sp.classList.add('hide');setTimeout(function(){sp.style.display='none';},520);}
+        S.view='app';render();loadDishes();
+      }).catch(function(){
+        history.replaceState(null,'',window.location.pathname);
+        S.view='auth';render();
+      });
+      return;
+    }
+  }
+
   setTimeout(function(){
     var sp=document.getElementById('splash');
     if(sp){sp.classList.add('hide');setTimeout(function(){sp.style.display='none';},520);}
