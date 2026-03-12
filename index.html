@@ -1328,58 +1328,84 @@ function renderChecklist(){
 
 /* ── SCHEDULE ── */
 function smartGenerate(pool){
-  // Rules:
-  // 1. Same dish cannot appear in both lunch & dinner on same day
-  // 2. Meat/Chicken categories: max 1 appearance per week across ALL 14 meal slots
-  // 3. No 3 consecutive meals of same category
-  var HEAVY=['meat','chicken'];
-  function isHeavy(cat){return cat&&HEAVY.indexOf(cat.toLowerCase())>-1;}
+  // RULES:
+  // 1. Never repeat a dish when pool >= 14 (enough for all 14 slots)
+  // 2. When pool < 14, spread dishes as evenly as possible — each dish used
+  //    ceil(14/n) times max, cycling through a fresh shuffle each pass
+  // 3. Lunch and dinner on the same day must always be different dishes
+  // 4. Meat/Chicken: max 1 appearance across the whole week
 
-  var week=[];
-  var usedHeavyCats={}; // track which heavy cats have been used this week
+  var HEAVY = ['meat','chicken'];
+  function isHeavy(cat){ return !!cat && HEAVY.indexOf(cat.toLowerCase()) > -1; }
 
-  // Build per-category pools
-  var heavyPool=shuffle(pool.filter(function(d){return isHeavy(d.category);}));
-  var lightPool=shuffle(pool.filter(function(d){return !isHeavy(d.category);}));
-  var allShuf=shuffle(pool);
+  var n = pool.length;
 
-  // Pick one meal for a slot, respecting rules
-  function pick(excludeIds,excludeCats,preferLight){
-    var candidates=allShuf.filter(function(d){
-      if(excludeIds.indexOf(d.id)>-1)return false;
-      if(excludeCats.indexOf((d.category||'').toLowerCase())>-1)return false;
-      if(preferLight&&isHeavy(d.category))return false;
-      return true;
-    });
-    // If no light candidates, relax preferLight
-    if(candidates.length===0)candidates=allShuf.filter(function(d){
-      return excludeIds.indexOf(d.id)===-1&&excludeCats.indexOf((d.category||'').toLowerCase())===-1;
-    });
-    if(candidates.length===0)return allShuf[0]||pool[0]; // fallback
-    return candidates[0|Math.random()*candidates.length];
+  // ── Step 1: build a 14-item ordered bag with no repeats within each pass ──
+  // Each "pass" is a full shuffle of the pool. We take passes until we have 14.
+  var bag = [];
+  while(bag.length < 14){
+    var pass = shuffle(pool.slice()); // fresh shuffle every pass
+    for(var i = 0; i < pass.length && bag.length < 14; i++){
+      bag.push(pass[i]);
+    }
+  }
+  // bag now has exactly 14 items, with dishes spread as evenly as possible
+
+  // ── Step 2: enforce max 1 heavy dish across the whole week ──
+  // Find all heavy positions and keep only the first one; replace the rest
+  // with light dishes already in the bag (swap them out)
+  var heavyPositions = [];
+  for(var i = 0; i < bag.length; i++){
+    if(isHeavy(bag[i].category)) heavyPositions.push(i);
+  }
+  // Keep first heavy, replace the rest with a non-heavy from the same pass
+  var lightPool = pool.filter(function(d){ return !isHeavy(d.category); });
+  for(var h = 1; h < heavyPositions.length; h++){
+    // Find a light dish not already adjacent in bag to swap in
+    var pos = heavyPositions[h];
+    var replacement = null;
+    var shuffledLight = shuffle(lightPool.slice());
+    for(var l = 0; l < shuffledLight.length; l++){
+      // Prefer one not already at pos-1 or pos+1
+      var candidate = shuffledLight[l];
+      var neighborIds = [
+        pos > 0 ? bag[pos-1].id : null,
+        pos < 13 ? bag[pos+1].id : null
+      ];
+      if(neighborIds.indexOf(candidate.id) === -1){
+        replacement = candidate; break;
+      }
+    }
+    if(!replacement && shuffledLight.length) replacement = shuffledLight[0];
+    if(replacement) bag[pos] = replacement;
   }
 
-  for(var d=0;d<7;d++){
-    var dayExcludeCats=[];
-    // Build heavy cat exclusions for this week so far
-    var weekHeavyUsed=[];
-    for(var k in usedHeavyCats){if(usedHeavyCats[k])weekHeavyUsed.push(k);}
+  // ── Step 3: assign bag to 7 days, fixing same-day lunch==dinner conflicts ──
+  var week = [];
+  for(var day = 0; day < 7; day++){
+    var lunch  = bag[day * 2];
+    var dinner = bag[day * 2 + 1];
 
-    // Pick lunch
-    var lunchExcludeCats=weekHeavyUsed.slice();
-    var lunch=pick([],lunchExcludeCats,false);
-    if(isHeavy(lunch.category))usedHeavyCats[lunch.category.toLowerCase()]=true;
+    // If they're the same dish, find the nearest different dish to swap dinner with
+    if(lunch.id === dinner.id){
+      // Look ahead/behind in the bag for a swap candidate
+      var swapped = false;
+      for(var offset = 1; offset < bag.length && !swapped; offset++){
+        var candidate = bag[(day * 2 + 1 + offset) % bag.length];
+        if(candidate.id !== lunch.id){
+          // Swap dinner slot with this candidate
+          var tmp = bag[day * 2 + 1];
+          bag[day * 2 + 1] = candidate;
+          bag[(day * 2 + 1 + offset) % bag.length] = tmp;
+          dinner = bag[day * 2 + 1];
+          swapped = true;
+        }
+      }
+    }
 
-    // Update heavy exclusions after lunch
-    weekHeavyUsed=[];for(var k in usedHeavyCats){if(usedHeavyCats[k])weekHeavyUsed.push(k);}
-
-    // Pick dinner: exclude same dish as lunch, exclude used heavy cats
-    var dinnerExcludeCats=weekHeavyUsed.slice();
-    var dinner=pick([lunch.id],dinnerExcludeCats,false);
-    if(isHeavy(dinner.category))usedHeavyCats[dinner.category.toLowerCase()]=true;
-
-    week.push({lunch:lunch,dinner:dinner});
+    week.push({ lunch: lunch, dinner: dinner });
   }
+
   return week;
 }
 
