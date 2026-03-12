@@ -324,6 +324,8 @@ var S = {
   dishes:[],loading:false,
   unchecked:(function(){try{return JSON.parse(localStorage.getItem(SK.uck)||'[]');}catch(x){return[];}}()),
   week:(function(){try{return JSON.parse(localStorage.getItem(SK.week)||'null');}catch(x){return null;}}()),
+  planSavedAt:(localStorage.getItem('zp_plan_saved_at')||null),
+  planDirty:false,   // true when generated/edited but not yet saved to cloud
   weekEdit:null, // {dayIdx, slot} for dropdown edit
   search:'',filter:'All',
   showAddDish:false,addDishName:'',addDishCat:'Meat',addDishBusy:false,
@@ -410,6 +412,44 @@ function isUnchecked(id){return S.unchecked.indexOf(id)>-1;}
 function getPool(){return S.dishes.filter(function(d){return !isUnchecked(d.id);}).map(function(d){return {id:d.id,name:d.name||d.dish_name,category:d.category||d.dish_category};});}
 function saveUC(){localStorage.setItem(SK.uck,JSON.stringify(S.unchecked));}
 function saveW(){if(S.week)localStorage.setItem(SK.week,JSON.stringify(S.week));}
+
+/* ── PLAN CLOUD SAVE / LOAD / DELETE ── */
+async function planSaveToCloud(){
+  var uid=S.session&&S.session.user&&S.session.user.id;
+  if(!uid)return;
+  var payload={week_data:S.week,saved_at:new Date().toISOString()};
+  // Upsert: update if exists, insert if not
+  var existing=await dbGet('user_menus','user_id=eq.'+uid+'&select=id');
+  if(existing&&existing.length){
+    await sbFetch('/rest/v1/user_menus?id=eq.'+existing[0].id,{method:'PATCH',headers:Object.assign({},sbH(false),{'Prefer':'return=representation'}),body:JSON.stringify(payload)});
+  } else {
+    await dbInsert('user_menus',Object.assign({user_id:uid},payload));
+  }
+  S.planSavedAt=payload.saved_at;
+  localStorage.setItem('zp_plan_saved_at',S.planSavedAt);
+}
+async function planLoadFromCloud(){
+  var uid=S.session&&S.session.user&&S.session.user.id;
+  if(!uid)return null;
+  var rows=await dbGet('user_menus','user_id=eq.'+uid+'&select=week_data,saved_at');
+  if(rows&&rows.length&&rows[0].week_data){
+    S.week=rows[0].week_data;
+    S.planSavedAt=rows[0].saved_at;
+    localStorage.setItem(SK.week,JSON.stringify(S.week));
+    localStorage.setItem('zp_plan_saved_at',S.planSavedAt);
+    return true;
+  }
+  return false;
+}
+async function planDeleteFromCloud(){
+  var uid=S.session&&S.session.user&&S.session.user.id;
+  if(!uid)return;
+  await sbFetch('/rest/v1/user_menus?user_id=eq.'+uid,{method:'DELETE',headers:sbH(false)});
+  S.week=null;S.planSavedAt=null;S.weekEdit=null;
+  localStorage.removeItem(SK.week);
+  localStorage.removeItem('zp_plan_saved_at');
+  saveW();
+}
 function fmtDate(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});}catch(x){return s;}}
 function userName(){return S.session&&S.session.user&&(S.session.user.user_metadata&&S.session.user.user_metadata.full_name||S.session.user.email)||'';}
 function userFirstName(){var n=userName();return n?n.split(' ')[0]:'';}
@@ -1205,6 +1245,9 @@ async function loadDishes(){
     S.dishes=(m||[]).map(function(d){return Object.assign({},d,{_s:'m'});})
       .concat((u||[]).map(function(d){return Object.assign({},d,{_s:'u'});}));
   }catch(e){showToast('Load error: '+e.message);}
+  // Load saved plan from cloud (overrides localStorage if cloud has one)
+  try{ await planLoadFromCloud(); }catch(e){}
+  S.planDirty=false;
   S.loading=false;patchMainContent();
 }
 
@@ -1412,18 +1455,62 @@ function smartGenerate(pool){
 function renderSchedule(){
   var pool=getPool();
   var avail=pool.length;
+  var hasPlan=S.week&&S.week.length>0;
 
   function gen(){
     if(avail<2){showToast('Need at least 2 checked dishes');return;}
-    S.week=smartGenerate(pool);S.weekEdit=null;saveW();showToast('Weekly plan ready! 🎉');patchMainContent();
+    S.week=smartGenerate(pool);S.weekEdit=null;S.planDirty=true;saveW();showToast('Plan generated! Tap Save to keep it ☁️');patchMainContent();
   }
 
-  var top=el('div',{className:'row-bet',style:{marginBottom:'14px'}},[
-    el('div',null,[el('div',{className:'sec-title'},['Weekly Plan']),el('div',{className:'sec-sub'},[avail+' dishes available'])]),
-    el('button',{className:'gen-btn',disabled:avail<2,onClick:gen},['↺ Generate'])
+  async function savePlan(){
+    showToast('Saving…');
+    try{
+      await planSaveToCloud();
+      S.planDirty=false;
+      showToast('✅ Plan saved to your account!');
+      patchMainContent();
+    }catch(e){showToast('Save failed: '+e.message);}
+  }
+
+  async function deletePlan(){
+    if(!confirm('Delete this weekly plan? This cannot be undone.'))return;
+    showToast('Deleting…');
+    try{
+      await planDeleteFromCloud();
+      S.planDirty=false;
+      showToast('Plan deleted');
+      patchMainContent();
+    }catch(e){showToast('Delete failed: '+e.message);}
+  }
+
+  // ── Top bar: title + action buttons ──
+  var actionBtns=[];
+  if(hasPlan){
+    // Regenerate
+    actionBtns.push(el('button',{className:'gen-btn',disabled:avail<2,onClick:gen,style:{fontSize:'12px',padding:'7px 13px'}},['↺ Regenerate']));
+    // Save (highlighted if dirty)
+    actionBtns.push(el('button',{onClick:savePlan,style:{background:S.planDirty?'#166534':'var(--sa)',color:'#fff',border:'none',borderRadius:'9px',padding:'7px 14px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif',display:'flex',alignItems:'center',gap:'5px'}},[(S.planDirty?'💾 Save Plan':'✅ Saved')]));
+    // Delete
+    actionBtns.push(el('button',{onClick:deletePlan,style:{background:'none',border:'1.5px solid #FCA5A5',color:'#DC2626',borderRadius:'9px',padding:'7px 11px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}},['🗑']));
+  } else {
+    actionBtns.push(el('button',{className:'gen-btn',disabled:avail<2,onClick:gen},['↺ Generate']));
+  }
+
+  var savedLabel=S.planSavedAt&&!S.planDirty
+    ?el('div',{style:{fontSize:'11px',color:'var(--sa)',fontWeight:'600',marginTop:'3px'}},['☁️ Saved '+fmtDate(S.planSavedAt)])
+    :S.planDirty?el('div',{style:{fontSize:'11px',color:'#D97706',fontWeight:'600',marginTop:'3px'}},['⚠️ Unsaved changes'])
+    :null;
+
+  var top=el('div',{className:'row-bet',style:{marginBottom:'14px',alignItems:'flex-start'}},[
+    el('div',null,[
+      el('div',{className:'sec-title'},['Weekly Plan']),
+      el('div',{className:'sec-sub'},[avail+' dishes available']),
+      savedLabel
+    ]),
+    el('div',{style:{display:'flex',gap:'7px',alignItems:'center',flexWrap:'wrap',justifyContent:'flex-end'}},actionBtns)
   ]);
 
-  // Low dish count banner
+  // ── Low dish count banner ──
   var lowBanner=avail>0&&avail<7?el('div',{style:{background:'#FEF3C7',border:'1px solid #FCD34D',borderRadius:'12px',padding:'12px 14px',marginBottom:'14px',display:'flex',gap:'10px',alignItems:'flex-start'}},[
     el('span',{style:{fontSize:'18px',flexShrink:'0'}},['⚠️']),
     el('div',{style:{flex:'1'}},[
@@ -1435,82 +1522,91 @@ function renderSchedule(){
     ])
   ]):null;
 
-  // Build a map of dish id → count of times it appears in the week plan
+  // ── Dish repeat map ──
   var dishCount={};
-  if(S.week&&S.week.length){
+  if(hasPlan){
     S.week.forEach(function(day){
-      ['lunch','dinner'].forEach(function(sl){
-        var m=day[sl];if(m){dishCount[m.id]=(dishCount[m.id]||0)+1;}
-      });
+      ['lunch','dinner'].forEach(function(sl){var m=day[sl];if(m){dishCount[m.id]=(dishCount[m.id]||0)+1;}});
     });
   }
 
-  var content=(!S.week||!S.week.length)
-    ?el('div',{className:'empty',style:{paddingTop:'50px'}},[el('div',{className:'empty-icon'},['📅']),el('p',{style:{fontWeight:'600',fontSize:'16px',marginBottom:'5px'}},['No plan yet']),el('p',{style:{fontSize:'13px'}},['Select dishes then tap Generate'])])
-    :el('div',null,S.week.map(function(day,i){
-        function mealSlot(m,slotKey,label){
-          var editing=S.weekEdit&&S.weekEdit.day===i&&S.weekEdit.slot===slotKey;
-          var isRepeated=m&&dishCount[m.id]>1;
+  // ── Empty state ──
+  var content=!hasPlan
+    ?el('div',{className:'empty',style:{paddingTop:'50px'}},[
+        el('div',{className:'empty-icon'},['📅']),
+        el('p',{style:{fontWeight:'600',fontSize:'16px',marginBottom:'5px'}},['No plan yet']),
+        el('p',{style:{fontSize:'13px'}},['Select dishes then tap Generate'])
+      ])
+    :el('div',null,[
+        // Day cards
+        el('div',null,S.week.map(function(day,i){
+          function mealSlot(m,slotKey,label){
+            var editing=S.weekEdit&&S.weekEdit.day===i&&S.weekEdit.slot===slotKey;
+            var isRepeated=m&&dishCount[m.id]>1;
 
-          var nameEl=el('div',{className:'meal-name',style:{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'8px'}},[
-            el('span',null,[m?m.name:'—']),
-            el('span',{style:{fontSize:'11px',color:'rgba(232,93,44,.7)',fontWeight:'700'}},[editing?'▲':'✏️'])
-          ]);
-          nameEl.addEventListener('click',function(){
-            S.weekEdit=(editing?null:{day:i,slot:slotKey});patchMainContent();
-          });
-
-          var ddEl=null;
-          if(editing){
-            var sel=el('select',{className:'inp',style:{marginTop:'8px',fontSize:'13px',padding:'9px 10px'}},
-              pool.map(function(d){return el('option',{value:d.id},[d.name+(d.category?' ('+d.category+')':'')]);})
-            );
-            setTimeout(function(){if(m)sel.value=m.id;},0);
-            sel.addEventListener('change',function(e){
-              var chosen=pool.find(function(d){return String(d.id)===e.target.value;});
-              if(chosen){S.week[i][slotKey]=chosen;saveW();S.weekEdit=null;patchMainContent();}
+            var nameEl=el('div',{className:'meal-name',style:{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'8px'}},[
+              el('span',null,[m?m.name:'—']),
+              el('span',{style:{fontSize:'11px',color:'rgba(232,93,44,.7)',fontWeight:'700'}},[editing?'▲':'✏️'])
+            ]);
+            nameEl.addEventListener('click',function(){
+              S.weekEdit=(editing?null:{day:i,slot:slotKey});patchMainContent();
             });
-            ddEl=sel;
+
+            var ddEl=null;
+            if(editing){
+              var sel=el('select',{className:'inp',style:{marginTop:'8px',fontSize:'13px',padding:'9px 10px'}},
+                pool.map(function(d){return el('option',{value:d.id},[d.name+(d.category?' ('+d.category+')':'')]);})
+              );
+              setTimeout(function(){if(m)sel.value=m.id;},0);
+              sel.addEventListener('change',function(e){
+                var chosen=pool.find(function(d){return String(d.id)===e.target.value;});
+                if(chosen){S.week[i][slotKey]=chosen;S.planDirty=true;saveW();S.weekEdit=null;patchMainContent();}
+              });
+              ddEl=sel;
+            }
+
+            var repeatTip=isRepeated?el('div',{style:{marginTop:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#FEF3C7',borderRadius:'7px',padding:'5px 9px',gap:'6px'}},[
+              el('span',{style:{fontSize:'11px',color:'#92400E',fontWeight:'600',lineHeight:'1.4'}},['🔁 Repeating — add a new dish to avoid this']),
+              el('button',{style:{flexShrink:'0',background:'#E85D2C',color:'#fff',border:'none',borderRadius:'6px',padding:'3px 9px',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'},onClick:function(){S.tab='checklist';S.showAddDish=true;S.addDishName='';
+                document.querySelectorAll('.tab-btn').forEach(function(b){var active=b.dataset.tab==='checklist';b.classList.toggle('on',active);var tabDef=USER_TABS.find(function(x){return x.id===b.dataset.tab;});if(tabDef){var svg=b.querySelector('svg');if(svg){var ns=tabDef.icon(active);b.replaceChild(ns,svg);}}});
+                patchMainContent();}},['+ Add'])
+            ]):null;
+
+            return el('div',{className:'meal-slot'},[
+              el('div',{className:'meal-lbl'},[label]),
+              nameEl,
+              m&&m.category?el('span',{className:'badge '+catCls(m.category)},[m.category]):null,
+              ddEl,repeatTip
+            ]);
           }
 
-          // Repetition tip shown under repeated dish
-          var repeatTip=isRepeated?el('div',{style:{marginTop:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#FEF3C7',borderRadius:'7px',padding:'5px 9px',gap:'6px'}},[
-            el('span',{style:{fontSize:'11px',color:'#92400E',fontWeight:'600',lineHeight:'1.4'}},['🔁 Repeating — add a new dish to avoid this']),
-            el('button',{style:{flexShrink:'0',background:'#E85D2C',color:'#fff',border:'none',borderRadius:'6px',padding:'3px 9px',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'},onClick:function(){S.tab='checklist';S.showAddDish=true;S.addDishName='';
-              document.querySelectorAll('.tab-btn').forEach(function(b){var active=b.dataset.tab==='checklist';b.classList.toggle('on',active);var tabDef=USER_TABS.find(function(x){return x.id===b.dataset.tab;});if(tabDef){var svg=b.querySelector('svg');if(svg){var ns=tabDef.icon(active);b.replaceChild(ns,svg);}}});
-              patchMainContent();}},['+ Add'])
-          ]):null;
-
-          return el('div',{className:'meal-slot'},[
-            el('div',{className:'meal-lbl'},[label]),
-            nameEl,
-            m&&m.category?el('span',{className:'badge '+catCls(m.category)},[m.category]):null,
-            ddEl,
-            repeatTip
+          return el('div',{className:'day-card'},[
+            el('div',{className:'day-hdr'},[
+              el('span',{style:{color:'#fff',fontSize:'15px',fontFamily:'Playfair Display,serif'}},[DAYS[i]]),
+              el('button',{className:'shuf-btn',onClick:function(){
+                if(!pool.length)return;
+                var wk=S.week;var usedHeavy={};
+                for(var d2=0;d2<7;d2++){
+                  if(d2===i)continue;
+                  ['lunch','dinner'].forEach(function(sl){var m=wk[d2][sl];if(m&&['meat','chicken'].indexOf((m.category||'').toLowerCase())>-1)usedHeavy[(m.category||'').toLowerCase()]=true;});
+                }
+                var excHeavy=Object.keys(usedHeavy);
+                var light=pool.filter(function(d){return excHeavy.indexOf((d.category||'').toLowerCase())===-1;});
+                var src=light.length>=2?light:pool;
+                var l=src[0|Math.random()*src.length],dn=src[0|Math.random()*src.length];
+                S.week[i]={lunch:l,dinner:dn};S.planDirty=true;saveW();S.weekEdit=null;patchMainContent();
+              }},['↺ Shuffle'])
+            ]),
+            el('div',{style:{padding:'11px 13px'}},[mealSlot(day.lunch,'lunch','🌤 Lunch'),mealSlot(day.dinner,'dinner','🌙 Dinner')])
           ]);
-        }
+        })),
+        // Bottom save bar (sticky nudge when dirty)
+        S.planDirty?el('div',{style:{background:'#FEF9C3',border:'1px solid #FDE047',borderRadius:'12px',padding:'12px 14px',marginTop:'12px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'10px'}},[
+          el('span',{style:{fontSize:'13px',color:'#854D0E',fontWeight:'600'}},['💾 Don\'t forget to save your plan!']),
+          el('button',{onClick:savePlan,style:{background:'#166534',color:'#fff',border:'none',borderRadius:'8px',padding:'8px 18px',fontSize:'13px',fontWeight:'700',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}},['Save Plan'])
+        ]):null
+      ]);
 
-        return el('div',{className:'day-card'},[
-          el('div',{className:'day-hdr'},[
-            el('span',{style:{color:'#fff',fontSize:'15px',fontFamily:'Playfair Display,serif'}},[DAYS[i]]),
-            el('button',{className:'shuf-btn',onClick:function(){
-              if(!pool.length)return;
-              var wk=S.week;
-              var usedHeavy={};
-              for(var d2=0;d2<7;d2++){
-                if(d2===i)continue;
-                ['lunch','dinner'].forEach(function(sl){var m=wk[d2][sl];if(m&&['meat','chicken'].indexOf((m.category||'').toLowerCase())>-1)usedHeavy[(m.category||'').toLowerCase()]=true;});
-              }
-              var excHeavy=Object.keys(usedHeavy);
-              var light=pool.filter(function(d){return excHeavy.indexOf((d.category||'').toLowerCase())===-1;});
-              var src=light.length>=2?light:pool;
-              var l=src[0|Math.random()*src.length],dn=src[0|Math.random()*src.length];
-              S.week[i]={lunch:l,dinner:dn};saveW();S.weekEdit=null;patchMainContent();
-            }},['↺ Shuffle'])
-          ]),
-          el('div',{style:{padding:'11px 13px'}},[mealSlot(day.lunch,'lunch','🌤 Lunch'),mealSlot(day.dinner,'dinner','🌙 Dinner')])
-        ]);
-      }));
   return el('div',{className:'ca'},[top,lowBanner,content]);
 }
 
