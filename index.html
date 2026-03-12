@@ -380,7 +380,9 @@ async function userInsert(t,o){return sbFetch('/rest/v1/'+t,{method:'POST',heade
 async function userDelete(t,id){return sbFetch('/rest/v1/'+t+'?id=eq.'+id,{method:'DELETE'});}
 /* Auth */
 async function authSignUp(e,p,n){
-  var redirectTo='https://zaiqaplan.netlify.app/';
+  // NOTE: For this to work, you MUST whitelist https://zaiqaplan.netlify.app
+  // in Supabase → Authentication → URL Configuration → Redirect URLs
+  var redirectTo='https://zaiqaplan.netlify.app';
   return sbFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:e,password:p,data:{full_name:n},options:{emailRedirectTo:redirectTo}})});
 }
 async function authSignIn(e,p){return sbFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:e,password:p})});}
@@ -1273,9 +1275,33 @@ function renderChecklist(){
     return(!q||nm.indexOf(q)>-1||ct.indexOf(q)>-1)&&(S.filter==='All'||(d.category||d.dish_category)===S.filter);
   });
   var chk=S.dishes.filter(function(d){return !isUnchecked(d.id);}).length;
+  var allSelected=chk===S.dishes.length;
+
+  function toggleAll(){
+    if(allSelected){
+      // Deselect all — add all IDs to unchecked
+      S.unchecked=S.dishes.map(function(d){return d.id;});
+    } else {
+      // Select all — clear unchecked
+      S.unchecked=[];
+    }
+    saveUC();patchMainContent();
+  }
+
   var si=el('input',{className:'inp',style:{marginBottom:'10px'},placeholder:'🔍  Search dishes…',onInput:function(e){S.search=e.target.value;patchMainContent();}});
   si.value=S.search;
   var pills=el('div',{className:'pill-row'},getAllCats().map(function(c){return el('button',{className:'fpill'+(S.filter===c?' on':''),onClick:function(){S.filter=c;patchMainContent();}},[c]);}));
+
+  // Low dishes warning
+  var pool=S.dishes.filter(function(d){return !isUnchecked(d.id);});
+  var lowWarn=pool.length>0&&pool.length<7?el('div',{style:{background:'#FEF3C7',border:'1px solid #FCD34D',borderRadius:'10px',padding:'11px 13px',marginBottom:'12px',fontSize:'13px',color:'#92400E',lineHeight:'1.5',display:'flex',gap:'8px',alignItems:'flex-start'}},[
+    el('span',{style:{fontSize:'16px',flexShrink:'0'}},['⚠️']),
+    el('div',null,[
+      el('strong',null,['Only '+pool.length+' dish'+(pool.length===1?'':'es')+' selected. ']),
+      'Add more dishes to avoid repetition in your weekly schedule — ideally 14+ for a full week with no repeats.'
+    ])
+  ]):null;
+
   var list=shown.length===0
     ?el('div',{className:'empty'},[el('div',{className:'empty-icon'},['🍽️']),el('p',{style:{fontWeight:'600',marginBottom:'5px'}},['No dishes found']),el('p',{style:{fontSize:'13px'}},['Tap + to add your own'])])
     :el('div',{className:'card'},shown.map(function(d){
@@ -1286,9 +1312,16 @@ function renderChecklist(){
           d._s==='u'?el('button',{className:'del-btn',onClick:async function(){if(!confirm('Remove "'+nm+'"?'))return;try{await userDelete('user_dishes',d.id);S.dishes=S.dishes.filter(function(x){return x.id!==d.id;});showToast('Removed');}catch(e){showToast('Error: '+e.message);}patchMainContent();}},['🗑']):null
         ]);
       }));
+
   return el('div',{className:'ca'},[
-    el('div',{style:{marginBottom:'14px'}},[el('div',{className:'sec-title'},['My Dishes']),el('div',{className:'sec-sub'},[el('span',{style:{color:'var(--sa)',fontWeight:'700'}},[String(chk)]),' of '+S.dishes.length+' selected'])]),
-    si,pills,list,
+    el('div',{style:{marginBottom:'14px',display:'flex',alignItems:'center',justifyContent:'space-between'}},[
+      el('div',null,[
+        el('div',{className:'sec-title'},['My Dishes']),
+        el('div',{className:'sec-sub'},[el('span',{style:{color:'var(--sa)',fontWeight:'700'}},[String(chk)]),' of '+S.dishes.length+' selected'])
+      ]),
+      S.dishes.length>0?el('button',{onClick:toggleAll,style:{background:'none',border:'1.5px solid var(--crd)',borderRadius:'8px',padding:'6px 13px',fontSize:'12px',fontWeight:'700',color:'var(--brm)',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'}},[allSelected?'☐ Deselect All':'☑ Select All']):null
+    ]),
+    si,pills,lowWarn,list,
     el('button',{className:'fab',onClick:function(){S.showAddDish=true;S.addDishName='';patchMainContent();}},['＋'])
   ]);
 }
@@ -1359,16 +1392,40 @@ function renderSchedule(){
     S.week=smartGenerate(pool);S.weekEdit=null;saveW();showToast('Weekly plan ready! 🎉');patchMainContent();
   }
 
-  var top=el('div',{className:'row-bet',style:{marginBottom:'18px'}},[
+  var top=el('div',{className:'row-bet',style:{marginBottom:'14px'}},[
     el('div',null,[el('div',{className:'sec-title'},['Weekly Plan']),el('div',{className:'sec-sub'},[avail+' dishes available'])]),
     el('button',{className:'gen-btn',disabled:avail<2,onClick:gen},['↺ Generate'])
   ]);
+
+  // Low dish count banner
+  var lowBanner=avail>0&&avail<7?el('div',{style:{background:'#FEF3C7',border:'1px solid #FCD34D',borderRadius:'12px',padding:'12px 14px',marginBottom:'14px',display:'flex',gap:'10px',alignItems:'flex-start'}},[
+    el('span',{style:{fontSize:'18px',flexShrink:'0'}},['⚠️']),
+    el('div',{style:{flex:'1'}},[
+      el('div',{style:{fontSize:'13px',fontWeight:'700',color:'#92400E',marginBottom:'3px'}},['Too few dishes for a full week!']),
+      el('div',{style:{fontSize:'12px',color:'#A16207',lineHeight:'1.5'}},['You have '+avail+' dish'+(avail===1?'':'es')+' selected. Add at least 14 to avoid any repetition.']),
+      el('button',{style:{marginTop:'8px',background:'#E85D2C',color:'#fff',border:'none',borderRadius:'7px',padding:'6px 14px',fontSize:'12px',fontWeight:'700',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'},onClick:function(){S.tab='checklist';S.showAddDish=true;S.addDishName='';
+        document.querySelectorAll('.tab-btn').forEach(function(b){var active=b.dataset.tab==='checklist';b.classList.toggle('on',active);var tabDef=USER_TABS.find(function(x){return x.id===b.dataset.tab;});if(tabDef){var svg=b.querySelector('svg');if(svg){var ns=tabDef.icon(active);b.replaceChild(ns,svg);}}});
+        patchMainContent();}},['+ Add Dishes'])
+    ])
+  ]):null;
+
+  // Build a map of dish id → count of times it appears in the week plan
+  var dishCount={};
+  if(S.week&&S.week.length){
+    S.week.forEach(function(day){
+      ['lunch','dinner'].forEach(function(sl){
+        var m=day[sl];if(m){dishCount[m.id]=(dishCount[m.id]||0)+1;}
+      });
+    });
+  }
 
   var content=(!S.week||!S.week.length)
     ?el('div',{className:'empty',style:{paddingTop:'50px'}},[el('div',{className:'empty-icon'},['📅']),el('p',{style:{fontWeight:'600',fontSize:'16px',marginBottom:'5px'}},['No plan yet']),el('p',{style:{fontSize:'13px'}},['Select dishes then tap Generate'])])
     :el('div',null,S.week.map(function(day,i){
         function mealSlot(m,slotKey,label){
           var editing=S.weekEdit&&S.weekEdit.day===i&&S.weekEdit.slot===slotKey;
+          var isRepeated=m&&dishCount[m.id]>1;
+
           var nameEl=el('div',{className:'meal-name',style:{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'8px'}},[
             el('span',null,[m?m.name:'—']),
             el('span',{style:{fontSize:'11px',color:'rgba(232,93,44,.7)',fontWeight:'700'}},[editing?'▲':'✏️'])
@@ -1390,11 +1447,20 @@ function renderSchedule(){
             ddEl=sel;
           }
 
+          // Repetition tip shown under repeated dish
+          var repeatTip=isRepeated?el('div',{style:{marginTop:'6px',display:'flex',alignItems:'center',justifyContent:'space-between',background:'#FEF3C7',borderRadius:'7px',padding:'5px 9px',gap:'6px'}},[
+            el('span',{style:{fontSize:'11px',color:'#92400E',fontWeight:'600',lineHeight:'1.4'}},['🔁 Repeating — add a new dish to avoid this']),
+            el('button',{style:{flexShrink:'0',background:'#E85D2C',color:'#fff',border:'none',borderRadius:'6px',padding:'3px 9px',fontSize:'11px',fontWeight:'700',cursor:'pointer',fontFamily:'Plus Jakarta Sans,sans-serif'},onClick:function(){S.tab='checklist';S.showAddDish=true;S.addDishName='';
+              document.querySelectorAll('.tab-btn').forEach(function(b){var active=b.dataset.tab==='checklist';b.classList.toggle('on',active);var tabDef=USER_TABS.find(function(x){return x.id===b.dataset.tab;});if(tabDef){var svg=b.querySelector('svg');if(svg){var ns=tabDef.icon(active);b.replaceChild(ns,svg);}}});
+              patchMainContent();}},['+ Add'])
+          ]):null;
+
           return el('div',{className:'meal-slot'},[
             el('div',{className:'meal-lbl'},[label]),
             nameEl,
             m&&m.category?el('span',{className:'badge '+catCls(m.category)},[m.category]):null,
-            ddEl
+            ddEl,
+            repeatTip
           ]);
         }
 
@@ -1403,7 +1469,6 @@ function renderSchedule(){
             el('span',{style:{color:'#fff',fontSize:'15px',fontFamily:'Playfair Display,serif'}},[DAYS[i]]),
             el('button',{className:'shuf-btn',onClick:function(){
               if(!pool.length)return;
-              // Reshuffle this day respecting weekly heavy rules
               var wk=S.week;
               var usedHeavy={};
               for(var d2=0;d2<7;d2++){
@@ -1420,7 +1485,7 @@ function renderSchedule(){
           el('div',{style:{padding:'11px 13px'}},[mealSlot(day.lunch,'lunch','🌤 Lunch'),mealSlot(day.dinner,'dinner','🌙 Dinner')])
         ]);
       }));
-  return el('div',{className:'ca'},[top,content]);
+  return el('div',{className:'ca'},[top,lowBanner,content]);
 }
 
 /* ── SHARE ── */
